@@ -21,7 +21,7 @@ class BashExecutor(
         private val DANGEROUS_PATTERNS = listOf(
             Regex("rm\\s+-rf\\s+/"),
             Regex("dd\\s+if="),
-            Regex(":\\(\\)\\s*\\{.*:\\|:.*&.*\\}.*:"),  // Fork bomb pattern
+            Regex(":\\(\\)\\{.*:\\|:.*&.*\\};?.*:"),  // Fork bomb pattern
             Regex("mkfs\\."),
             Regex("sudo"),
             Regex("su\\s+"),
