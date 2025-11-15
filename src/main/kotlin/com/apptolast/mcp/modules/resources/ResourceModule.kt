@@ -208,14 +208,27 @@ class ResourceModule(
         // Validate path is within resources directory using real paths to prevent symlink/case issues
         return try {
             val resourcesRealPath = config.resourcesPath.toRealPath()
-            val resolvedRealPath = resolved.toRealPath()
-            if (!resolvedRealPath.startsWith(resourcesRealPath)) {
-                null
+            
+            // Check if the file exists; if so, validate its real path
+            if (Files.exists(resolved)) {
+                val resolvedRealPath = resolved.toRealPath()
+                if (!resolvedRealPath.startsWith(resourcesRealPath)) {
+                    null
+                } else {
+                    resolvedRealPath
+                }
             } else {
-                resolvedRealPath
+                // For non-existent files, validate the parent directory's real path
+                val parent = resolved.parent ?: return null
+                val parentRealPath = parent.toRealPath()
+                if (!parentRealPath.startsWith(resourcesRealPath)) {
+                    null
+                } else {
+                    resolved
+                }
             }
         } catch (e: Exception) {
-            // If path doesn't exist yet or can't be resolved, return null
+            // If parent directory doesn't exist or can't be resolved, return null
             null
         }
     }
