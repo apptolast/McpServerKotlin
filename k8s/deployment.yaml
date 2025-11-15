@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-fullstack-server
+  namespace: cyberlab
+  labels:
+    app: mcp-server
+    version: v1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-server
+  template:
+    metadata:
+      labels:
+        app: mcp-server
+        version: v1.0
+    spec:
+      serviceAccountName: mcp-server
+      containers:
+      - name: mcp-server
+        image: apptolast.com/mcp-fullstack-server:1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        env:
+        - name: MCP_HOST
+          value: "0.0.0.0"
+        - name: MCP_PORT
+          value: "3000"
+        - name: MCP_WORKING_DIR
+          value: "/workspace"
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: github-token
+              optional: true
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: postgres-host
+              optional: true
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: postgres-port
+              optional: true
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: mcp-workspace-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mcp-workspace-pvc
+  namespace: cyberlab
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

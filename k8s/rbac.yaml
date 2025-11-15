@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-server
+  namespace: cyberlab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mcp-server-role
+  namespace: cyberlab
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mcp-server-binding
+  namespace: cyberlab
+subjects:
+- kind: ServiceAccount
+  name: mcp-server
+  namespace: cyberlab
+roleRef:
+  kind: Role
+  name: mcp-server-role
+  apiGroup: rbac.authorization.k8s.io
