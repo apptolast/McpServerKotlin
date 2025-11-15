@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-config
+  namespace: cyberlab
+data:
+  postgres-host: "postgres.cyberlab.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "mcp_applications"
+  mongodb-db: "mcp_applications"
+  
+  # Filesystem configuration
+  allowed-directories: |
+    /workspace
+    /workspace/projects
+    /tmp/mcp-builds
+  
+  # Bash configuration
+  allowed-commands: |
+    ls,cat,grep,find,echo,pwd
+    mkdir,touch,mv,cp,rm
+    git,npm,gradle,kotlinc
+    docker,kubectl,curl,wget
