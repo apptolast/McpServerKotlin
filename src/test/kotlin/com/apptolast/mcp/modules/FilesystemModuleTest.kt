@@ -19,6 +19,7 @@ class FilesystemModuleTest {
     
     private lateinit var tempDir: Path
     private lateinit var filesystemModule: FilesystemModule
+    private val KEEP_FILES_FOR_INSPECTION = false
     
     @BeforeEach
     fun setup() {
@@ -33,7 +34,11 @@ class FilesystemModuleTest {
     
     @AfterEach
     fun cleanup() {
-        tempDir.deleteRecursively()
+        if (!KEEP_FILES_FOR_INSPECTION) {
+            tempDir.deleteRecursively()
+        } else {
+            println("⚠️ Archivos NO borrados. Recuerda limpiar: $tempDir")
+        }
     }
     
     @Test
