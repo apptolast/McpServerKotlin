@@ -205,12 +205,19 @@ class ResourceModule(
         val relativePath = uri.removePrefix("resource://")
         val resolved = config.resourcesPath.resolve(relativePath).normalize()
         
-        // Validate path is within resources directory
-        if (!resolved.startsWith(config.resourcesPath)) {
-            return null
+        // Validate path is within resources directory using real paths to prevent symlink/case issues
+        return try {
+            val resourcesRealPath = config.resourcesPath.toRealPath()
+            val resolvedRealPath = resolved.toRealPath()
+            if (!resolvedRealPath.startsWith(resourcesRealPath)) {
+                null
+            } else {
+                resolvedRealPath
+            }
+        } catch (e: Exception) {
+            // If path doesn't exist yet or can't be resolved, return null
+            null
         }
-        
-        return resolved
     }
     
     private fun extractDescription(file: Path): String? {

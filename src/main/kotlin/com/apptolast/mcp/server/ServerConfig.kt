@@ -3,7 +3,6 @@ package com.apptolast.mcp.server
 import com.typesafe.config.ConfigFactory
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.Path
 
 data class ServerConfig(
     val host: String,

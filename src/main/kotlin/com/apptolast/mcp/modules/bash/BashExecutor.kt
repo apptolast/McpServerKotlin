@@ -16,6 +16,19 @@ class BashExecutor(
     private val config: BashConfig
 ) {
     
+    companion object {
+        // Dangerous command patterns compiled once for efficiency
+        private val DANGEROUS_PATTERNS = listOf(
+            Regex("rm\\s+-rf\\s+/"),
+            Regex("dd\\s+if="),
+            Regex(":\\(\\)\\s*\\{.*:\\|:.*&.*\\}.*:"),  // Fork bomb pattern
+            Regex("mkfs\\."),
+            Regex("sudo"),
+            Regex("su\\s+"),
+            Regex("chmod\\s+777")
+        )
+    }
+    
     private fun validateCommand(command: String): Result<String> {
         val baseCommand = command.trim().split(Regex("\\s+")).firstOrNull() ?: ""
         
@@ -26,17 +39,7 @@ class BashExecutor(
         }
         
         // Check for dangerous patterns
-        val dangerousPatterns = listOf(
-            Regex("rm\\s+-rf\\s+/"),
-            Regex("dd\\s+if="),
-            Regex(":(\\s*)\\{(\\s*):(.*)\\|(.*):(.*)&(.*);"),  // Fork bomb pattern
-            Regex("mkfs\\."),
-            Regex("sudo"),
-            Regex("su\\s+"),
-            Regex("chmod\\s+777")
-        )
-        
-        dangerousPatterns.forEach { pattern ->
+        DANGEROUS_PATTERNS.forEach { pattern ->
             if (pattern.containsMatchIn(command)) {
                 return Result.failure(
                     SecurityException("Dangerous pattern detected in command")

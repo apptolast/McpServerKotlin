@@ -43,11 +43,16 @@ class PostgreSQLModule(
     
     private fun isReadOnlyQuery(sql: String): Boolean {
         val normalized = sql.trim().uppercase()
-        val readOnlyPatterns = listOf("SELECT", "SHOW", "DESCRIBE", "EXPLAIN", "WITH")
+        val readOnlyPatterns = listOf("SELECT", "SHOW", "DESCRIBE", "EXPLAIN")
         val writePatterns = listOf("INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", "TRUNCATE")
         
-        return readOnlyPatterns.any { normalized.startsWith(it) } &&
-               writePatterns.none { normalized.contains(it) }
+        // Check if query starts with a read-only pattern
+        val startsWithReadOnly = readOnlyPatterns.any { normalized.startsWith(it) }
+        
+        // Reject any query containing write operations (including in CTEs and subqueries)
+        val containsWrite = writePatterns.any { normalized.contains(it) }
+        
+        return startsWithReadOnly && !containsWrite
     }
     
     suspend fun executeQuery(

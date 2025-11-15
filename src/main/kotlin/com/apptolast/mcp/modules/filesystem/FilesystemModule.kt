@@ -23,10 +23,18 @@ class FilesystemModule(
     private fun validatePath(path: String): Result<Path> {
         val normalizedPath = Paths.get(path).normalize().toAbsolutePath()
         
-        // Path traversal protection
+        // Path traversal protection using real paths to resolve symlinks
         val isAllowed = config.allowedDirectories.any { allowedDir ->
             try {
-                normalizedPath.startsWith(allowedDir)
+                val allowedRealPath = allowedDir.toRealPath()
+                // Try to get real path, but if file doesn't exist yet, use normalized path
+                val pathToCheck = try {
+                    normalizedPath.toRealPath()
+                } catch (e: Exception) {
+                    // File doesn't exist yet, use normalized path for validation
+                    normalizedPath
+                }
+                pathToCheck.startsWith(allowedRealPath)
             } catch (e: Exception) {
                 false
             }
