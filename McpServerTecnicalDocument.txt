@@ -1,0 +1,2875 @@
+Here is the native English translation of the technical specification document.
+
+-----
+
+**MCP Full-Stack Server - Technical Specification**
+**Autonomous Application Construction System via AIs**
+**Version:** 1.0
+**Date:** November 12, 2025
+**Core Technology:** Kotlin + MCP Protocol
+**Target:** Kubernetes Pod (Arch Linux Desktop)
+
+-----
+
+## 📋 Table of Contents
+
+  * Executive Summary
+  * System Architecture
+  * Technology Stack
+  * Core Components
+  * Kotlin Implementation
+  * Kubernetes Integration
+  * Configuration and Deployment
+  * Security System
+  * Monitoring and Observability
+  * Implementation Roadmap
+
+-----
+
+## 1\. Executive Summary
+
+### 1.1 Project Objective
+
+Develop a complete MCP (Model Context Protocol) Server in Kotlin that allows Artificial Intelligences to autonomously build full-stack applications, with capabilities for:
+
+  * ✅ **Bash command** execution and **filesystem operations**
+  * ✅ Management of **custom documentation** and technical resources
+  * ✅ **GitHub integration** for version control
+  * ✅ **Persistent memory** system based on a **Knowledge Graph**
+  * ✅ Connection to **databases** (PostgreSQL, MongoDB, MySQL)
+  * ✅ Advanced **JSON processing**
+  * ✅ Orchestration of **complex workflows**
+
+### 1.2 Infrastructure Context
+
+  * **Target Pod:** `cyberlab/archlinux-desktop-0`
+  * **Namespace:** `cyberlab`
+  * **Cluster:** `AppToLastServer`
+  * **Base OS:** Arch Linux
+  * **Exposed Services:** Ports 3000, 3001
+
+### 1.3 Key Benefits
+
+  * 🚀 **Autonomous Development:** AIs can create complete applications without manual intervention.
+  * 🔒 **Robust Security:** Granular access control and operation validation.
+  * 📊 **Complete Traceability:** The entire construction process is auditable.
+  * 🔄 **CI/CD Integration:** Automation from development to deployment.
+  * 🧠 **Persistent Memory:** AIs learn from previous projects.
+
+-----
+
+## 2\. System Architecture
+
+### 2.1 High-Level Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       MCP Client (Claude/AI)                     │
+│                    [JSON-RPC 2.0 Protocol]                       │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            │ HTTP/SSE/Stdio
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│                  MCP Kotlin Server (Ktor)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐    │
+│  │   Routing    │  │ Auth & Auth  │  │   Tool Registry   │    │
+│  │   Layer      │  │   Middleware │  │                   │    │
+│  └──────────────┘  └──────────────┘  └───────────────────┘    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌──────▼───────┐  ┌───────▼────────┐
+│   Filesystem   │  │   GitHub     │  │    Memory      │
+│   Operations   │  │   Integration│  │  Knowledge     │
+│   Module       │  │   Module     │  │    Graph       │
+└────────┬───────┘  └──────┬───────┘  └───────┬────────┘
+         │                  │                  │
+┌────────▼────────┐  ┌─────▼────────┐  ┌─────▼────────┐
+│  Bash Executor  │  │ Git Commands │  │ LibSQL/Neo4j │
+│  (Secure Shell) │  │   & API      │  │   Storage    │
+└─────────────────┘  └──────────────┘  └──────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        │                   │                   │
+┌───────▼────────┐  ┌──────▼───────┐  ┌───────▼────────┐
+│   PostgreSQL   │  │   MongoDB    │  │     MySQL      │
+│   Connector    │  │   Connector  │  │   Connector    │
+└────────────────┘  └──────────────┘  └────────────────┘
+```
+
+### 2.2 Architectural Components
+
+#### 2.2.1 MCP Server Core
+
+  * **Language:** Kotlin 2.0+
+  * **Web Framework:** Ktor 3.1+
+  * **Protocol:** JSON-RPC 2.0 over HTTP/SSE/Stdio
+  * **SDK:** `io.modelcontextprotocol:kotlin-sdk:0.6.0`
+
+#### 2.2.2 Transport Layer
+
+  * **Stdio Transport:** For direct local communication
+  * **SSE (Server-Sent Events):** For event streaming
+  * **HTTP Transport:** For remote access and scalability
+
+#### 2.2.3 Tool Modules
+
+Each module implements a set of specific tools that AIs can invoke.
+
+-----
+
+## 3\. Technology Stack
+
+### 3.1 Core Dependencies
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    // MCP SDK
+    implementation("io.modelcontextprotocol:kotlin-sdk:0.6.0")
+    
+    // Ktor Server
+    implementation("io.ktor:ktor-server-core:3.1.3")
+    implementation("io.ktor:ktor-server-netty:3.1.3")
+    implementation("io.ktor:ktor-server-sse:3.1.3")
+    implementation("io.ktor:ktor-server-content-negotiation:3.1.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.1.3")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    
+    // Database Drivers
+    implementation("org.postgresql:postgresql:42.7.3")
+    implementation("org.mongodb:mongodb-driver-kotlin-coroutine:5.2.0")
+    implementation("mysql:mysql-connector-java:8.0.33")
+    
+    // Git Integration
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202405070100-r")
+    
+    // Process Execution
+    implementation("org.apache.commons:commons-exec:1.4.0")
+    
+    // Logging
+    implementation("io.github.oshai:kotlin-logging:7.0.7")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
+    
+    // Configuration
+    implementation("com.typesafe:config:1.4.3")
+    
+    // Testing
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+    testImplementation("io.mockk:mockk:1.14.4")
+}
+```
+
+### 3.2 Tool Versions
+
+| Tool | Version | Purpose |
+| :--- | :--- | :--- |
+| Kotlin | 2.2.0 | Main language |
+| JDK | 21 LTS | Runtime |
+| Gradle | 8.10 | Build tool |
+| Docker | 24.0+ | Containerization |
+| Kubernetes | 1.28+ | Orchestration |
+
+-----
+
+## 4\. Core Components
+
+### 4.1 Filesystem Operations Module
+
+#### 4.1.1 Functionality
+
+Provides secure filesystem operations with granular access control.
+
+**Available Tools:**
+
+```kotlin
+// Tool Structure
+sealed class FilesystemTool {
+    data class ReadFile(
+        val path: String,
+        val encoding: String = "UTF-8"
+    )
+    
+    data class WriteFile(
+        val path: String,
+        val content: String,
+        val mode: WriteMode = WriteMode.CREATE
+    )
+    
+    data class ListDirectory(
+        val path: String,
+        val recursive: Boolean = false,
+        val maxDepth: Int = 2
+    )
+    
+    data class CreateDirectory(
+        val path: String,
+        val recursive: Boolean = true
+    )
+    
+    data class DeleteFile(
+        val path: String,
+        val recursive: Boolean = false
+    )
+    
+    data class MoveFile(
+        val source: String,
+        val destination: String
+    )
+    
+    data class SearchFiles(
+        val pattern: String,
+        val directory: String,
+        val maxResults: Int = 100
+    )
+}
+```
+
+#### 4.1.2 Security Implementation
+
+```kotlin
+class FilesystemModule(
+    private val allowedDirectories: List<Path>,
+    private val maxFileSize: Long = 10 * 1024 * 1024, // 10MB
+    private val allowedExtensions: Set<String>
+) {
+    
+    private fun validatePath(path: String): Result<Path> {
+        val normalizedPath = Paths.get(path).normalize().toAbsolutePath()
+        
+        // Path traversal protection
+        val isAllowed = allowedDirectories.any { allowedDir ->
+            normalizedPath.startsWith(allowedDir)
+        }
+        
+        if (!isAllowed) {
+            return Result.failure(
+                SecurityException("Access denied: path outside allowed directories")
+            )
+        }
+        
+        return Result.success(normalizedPath)
+    }
+    
+    suspend fun readFile(request: FilesystemTool.ReadFile): ToolResult {
+        return validatePath(request.path).fold(
+            onSuccess = { path ->
+                if (Files.size(path) > maxFileSize) {
+                    return ToolResult.error("File too large: exceeds $maxFileSize bytes")
+                }
+                
+                val content = withContext(Dispatchers.IO) {
+                    path.readText(Charset.forName(request.encoding))
+                }
+                
+                ToolResult.success(
+                    content = listOf(
+                        TextContent(
+                            type = "text",
+                            text = content
+                        )
+                    )
+                )
+            },
+            onFailure = { e ->
+                ToolResult.error(e.message ?: "Failed to read file")
+            }
+        )
+    }
+    
+    suspend fun writeFile(request: FilesystemTool.WriteFile): ToolResult {
+        return validatePath(request.path).fold(
+            onSuccess = { path ->
+                withContext(Dispatchers.IO) {
+                    when (request.mode) {
+                        WriteMode.CREATE -> {
+                            if (Files.exists(path)) {
+                                return@withContext ToolResult.error("File already exists")
+                            }
+                            Files.createDirectories(path.parent)
+                            path.writeText(request.content)
+                        }
+                        WriteMode.OVERWRITE -> {
+                            Files.createDirectories(path.parent)
+                            path.writeText(request.content)
+                        }
+                        WriteMode.APPEND -> {
+                            Files.createDirectories(path.parent)
+                            path.appendText(request.content)
+                        }
+                    }
+                }
+                
+                ToolResult.success(
+                    content = listOf(
+                        TextContent(
+                            type = "text",
+                            text = "File written successfully: ${path.fileName}"
+                        )
+                    )
+                )
+            },
+            onFailure = { e ->
+                ToolResult.error(e.message ?: "Failed to write file")
+            }
+        )
+    }
+}
+```
+
+### 4.2 Bash Execution Module
+
+#### 4.2.1 Allowed Commands
+
+```kotlin
+class BashExecutor(
+    private val allowedCommands: Set<String>,
+    private val workingDirectory: Path,
+    private val timeoutSeconds: Long = 60
+) {
+    
+    // Whitelist of safe commands
+    companion object {
+        val DEFAULT_ALLOWED_COMMANDS = setOf(
+            "ls", "cat", "grep", "find", "echo", "pwd", 
+            "mkdir", "touch", "mv", "cp", "rm",
+            "git", "npm", "gradle", "kotlinc",
+            "docker", "kubectl", "curl", "wget"
+        )
+    }
+    
+    data class CommandRequest(
+        val command: String,
+        val args: List<String> = emptyList(),
+        val env: Map<String, String> = emptyMap()
+    )
+    
+    suspend fun execute(request: CommandRequest): CommandResult {
+        // Validate command
+        if (!isCommandAllowed(request.command)) {
+            return CommandResult.error(
+                "Command not allowed: ${request.command}"
+            )
+        }
+        
+        return withContext(Dispatchers.IO) {
+            try {
+                val commandLine = buildCommandLine(request)
+                val executor = DefaultExecutor()
+                executor.workingDirectory = workingDirectory.toFile()
+                
+                val watchdog = ExecuteWatchdog(timeoutSeconds * 1000)
+                executor.watchdog = watchdog
+                
+                val outputStream = ByteArrayOutputStream()
+                val errorStream = ByteArrayOutputStream()
+                
+                val pumpStreamHandler = PumpStreamHandler(outputStream, errorStream)
+                executor.streamHandler = pumpStreamHandler
+                
+                val exitValue = executor.execute(commandLine)
+                
+                CommandResult.success(
+                    exitCode = exitValue,
+                    stdout = outputStream.toString("UTF-8"),
+                    stderr = errorStream.toString("UTF-8")
+                )
+            } catch (e: Exception) {
+                CommandResult.error(e.message ?: "Command execution failed")
+            }
+        }
+    }
+    
+    private fun isCommandAllowed(command: String): Boolean {
+        val baseCommand = command.split(" ").first()
+        return allowedCommands.contains(baseCommand)
+    }
+}
+```
+
+### 4.3 GitHub Integration Module
+
+#### 4.3.1 Git Operations
+
+```kotlin
+class GitHubModule(
+    private val repoPath: Path,
+    private val githubToken: String? = null
+) {
+    
+    private val git: Git by lazy {
+        if (Files.exists(repoPath.resolve(".git"))) {
+            Git.open(repoPath.toFile())
+        } else {
+            Git.init().setDirectory(repoPath.toFile()).call()
+        }
+    }
+    
+    data class CommitRequest(
+        val message: String,
+        val files: List<String> = emptyList(), // empty = all
+        val author: String,
+        val email: String
+    )
+    
+    data class PushRequest(
+        val remote: String = "origin",
+        val branch: String = "main",
+        val force: Boolean = false
+    )
+    
+    suspend fun status(): ToolResult = withContext(Dispatchers.IO) {
+        try {
+            val status = git.status().call()
+            
+            val statusInfo = buildString {
+                appendLine("Branch: ${git.repository.branch}")
+                appendLine("\nModified files:")
+                status.modified.forEach { appendLine("  M $it") }
+                appendLine("\nUntracked files:")
+                status.untracked.forEach { appendLine("  ? $it") }
+                appendLine("\nStaged files:")
+                status.added.forEach { appendLine("  A $it") }
+            }
+            
+            ToolResult.success(
+                content = listOf(TextContent(type = "text", text = statusInfo))
+            )
+        } catch (e: Exception) {
+            ToolResult.error("Git status failed: ${e.message}")
+        }
+    }
+    
+    suspend fun commit(request: CommitRequest): ToolResult = withContext(Dispatchers.IO) {
+        try {
+            // Stage files
+            val addCommand = git.add()
+            if (request.files.isEmpty()) {
+                addCommand.addFilepattern(".")
+            } else {
+                request.files.forEach { addCommand.addFilepattern(it) }
+            }
+            addCommand.call()
+            
+            // Commit
+            val commit = git.commit()
+                .setMessage(request.message)
+                .setAuthor(request.author, request.email)
+                .call()
+            
+            ToolResult.success(
+                content = listOf(
+                    TextContent(
+                        type = "text",
+                        text = "Committed: ${commit.id.abbreviate(7).name()} - ${request.message}"
+                    )
+                )
+            )
+        } catch (e: Exception) {
+            ToolResult.error("Git commit failed: ${e.message}")
+        }
+    }
+    
+    suspend fun push(request: PushRequest): ToolResult = withContext(Dispatchers.IO) {
+        try {
+            val pushCommand = git.push()
+                .setRemote(request.remote)
+                .setForce(request.force)
+            
+            if (githubToken != null) {
+                pushCommand.setCredentialsProvider(
+                    UsernamePasswordCredentialsProvider(githubToken, "")
+                )
+            }
+            
+            val result = pushCommand.call()
+            
+            ToolResult.success(
+                content = listOf(
+                    TextContent(
+                        type = "text",
+                        text = "Pushed to ${request.remote}/${request.branch}"
+                    )
+                )
+            )
+        } catch (e: Exception) {
+            ToolResult.error("Git push failed: ${e.message}")
+        }
+    }
+}
+```
+
+### 4.4 Memory Module (Knowledge Graph)
+
+#### 4.4.1 Knowledge Graph Structure
+
+```kotlin
+// Core Entities
+@Serializable
+data class Entity(
+    val name: String,
+    val entityType: String,
+    val observations: List<String> = emptyList(),
+    val createdAt: Instant = Clock.System.now(),
+    val updatedAt: Instant = Clock.System.now()
+)
+
+@Serializable
+data class Relation(
+    val from: String,
+    val to: String,
+    val relationType: String,
+    val createdAt: Instant = Clock.System.now()
+)
+
+@Serializable
+data class KnowledgeGraph(
+    val entities: Map<String, Entity> = emptyMap(),
+    val relations: List<Relation> = emptyList()
+)
+```
+
+#### 4.4.2 Storage Implementation
+
+```kotlin
+class MemoryModule(
+    private val storagePath: Path
+) {
+    
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    }
+    
+    private val graphFile = storagePath.resolve("knowledge_graph.jsonl")
+    
+    data class CreateEntitiesRequest(
+        val entities: List<EntityInput>
+    )
+    
+    data class EntityInput(
+        val name: String,
+        val entityType: String,
+        val observations: List<String>
+    )
+    
+    data class CreateRelationsRequest(
+        val relations: List<RelationInput>
+    )
+    
+    data class RelationInput(
+        val from: String,
+        val to: String,
+        val relationType: String
+    )
+    
+    suspend fun createEntities(request: CreateEntitiesRequest): ToolResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                val graph = loadGraph()
+                val newEntities = request.entities.map { input ->
+                    Entity(
+                        name = input.name,
+                        entityType = input.entityType,
+                        observations = input.observations
+                    )
+                }
+                
+                val updatedGraph = graph.copy(
+                    entities = graph.entities + newEntities.associateBy { it.name }
+                )
+                
+                saveGraph(updatedGraph)
+                
+                ToolResult.success(
+                    content = listOf(
+                        TextContent(
+                            type = "text",
+                            text = "Created ${newEntities.size} entities"
+                        )
+                    ),
+                    structuredContent = mapOf("entities" to newEntities)
+                )
+            } catch (e: Exception) {
+                ToolResult.error("Failed to create entities: ${e.message}")
+            }
+        }
+    }
+    
+    suspend fun searchNodes(query: String): ToolResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                val graph = loadGraph()
+                
+                // Simple search by name and observations
+                val matchingEntities = graph.entities.values.filter { entity ->
+                    entity.name.contains(query, ignoreCase = true) ||
+                    entity.observations.any { it.contains(query, ignoreCase = true) }
+                }
+                
+                // Get relevant relations
+                val relevantRelations = graph.relations.filter { relation ->
+                    matchingEntities.any { it.name == relation.from || it.name == relation.to }
+                }
+                
+                val result = mapOf(
+                    "entities" to matchingEntities,
+                    "relations" to relevantRelations,
+                    "totalMatches" to matchingEntities.size
+                )
+                
+                ToolResult.success(
+                    content = listOf(
+                        TextContent(
+                            type = "text",
+                            text = "Found ${matchingEntities.size} matching entities"
+                        )
+                    ),
+                    structuredContent = result
+                )
+            } catch (e: Exception) {
+                ToolResult.error("Search failed: ${e.message}")
+            }
+        }
+    }
+    
+    private fun loadGraph(): KnowledgeGraph {
+        if (!Files.exists(graphFile)) {
+            return KnowledgeGraph()
+        }
+        
+        // Read JSONL file
+        val lines = graphFile.readLines()
+        val entities = mutableMapOf<String, Entity>()
+        val relations = mutableListOf<Relation>()
+        
+        lines.forEach { line ->
+            if (line.isBlank()) return@forEach
+            
+            val obj = json.parseToJsonElement(line).jsonObject
+            when (obj["type"]?.toString()?.trim('"')) {
+                "entity" -> {
+                    val entity = json.decodeFromJsonElement<Entity>(obj)
+                    entities[entity.name] = entity
+                }
+                "relation" -> {
+                    val relation = json.decodeFromJsonElement<Relation>(obj)
+                    relations.add(relation)
+                }
+            }
+        }
+        
+        return KnowledgeGraph(entities, relations)
+    }
+    
+    private fun saveGraph(graph: KnowledgeGraph) {
+        Files.createDirectories(graphFile.parent)
+        
+        graphFile.bufferedWriter().use { writer ->
+            // Write entities
+            graph.entities.values.forEach { entity ->
+                val obj = json.encodeToJsonElement(entity).jsonObject
+                    .toMutableMap()
+                    .apply { put("type", JsonPrimitive("entity")) }
+                writer.write(json.encodeToString(JsonObject(obj)))
+                writer.newLine()
+            }
+            
+            // Write relations
+            graph.relations.forEach { relation ->
+                val obj = json.encodeToJsonElement(relation).jsonObject
+                    .toMutableMap()
+                    .apply { put("type", JsonPrimitive("relation")) }
+                writer.write(json.encodeToString(JsonObject(obj)))
+                writer.newLine()
+            }
+        }
+    }
+}
+```
+
+### 4.5 Database Connectors Module
+
+#### 4.5.1 PostgreSQL Connector
+
+```kotlin
+class PostgreSQLModule(
+    private val config: DatabaseConfig
+) {
+    
+    data class DatabaseConfig(
+        val host: String,
+        val port: Int = 5432,
+        val database: String,
+        val username: String,
+        val password: String,
+        val ssl: Boolean = true
+    )
+    
+    data class QueryRequest(
+        val sql: String,
+        val params: List<Any> = emptyList(),
+        val maxRows: Int = 1000
+    )
+    
+    private val dataSource by lazy {
+        PGSimpleDataSource().apply {
+            serverNames = arrayOf(config.host)
+            portNumbers = intArrayOf(config.port)
+            databaseName = config.database
+            user = config.username
+            password = config.password
+            ssl = config.ssl
+        }
+    }
+    
+    suspend fun executeQuery(request: QueryRequest): ToolResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Validate it's a read-only query
+                if (!isReadOnlyQuery(request.sql)) {
+                    return@withContext ToolResult.error(
+                        "Only SELECT queries are allowed for safety"
+                    )
+                }
+                
+                dataSource.connection.use { conn ->
+                    conn.prepareStatement(request.sql).use { stmt ->
+                        stmt.maxRows = request.maxRows
+                        
+                        // Bind parameters
+                        request.params.forEachIndexed { index, param ->
+                            stmt.setObject(index + 1, param)
+                        }
+                        
+                        val rs = stmt.executeQuery()
+                        val metadata = rs.metaData
+                        val columnCount = metadata.columnCount
+                        
+                        val columns = (1..columnCount).map { i ->
+                            metadata.getColumnName(i) to metadata.getColumnTypeName(i)
+                        }
+                        
+                        val rows = mutableListOf<Map<String, Any?>>()
+                        while (rs.next() && rows.size < request.maxRows) {
+                            val row = columns.associate { (colName, _) ->
+                                colName to rs.getObject(colName)
+                            }
+                            rows.add(row)
+                        }
+                        
+                        val result = mapOf(
+                            "columns" to columns.map { it.first },
+                            "rows" to rows,
+                            "rowCount" to rows.size
+                        )
+                        
+                        ToolResult.success(
+                            content = listOf(
+                                TextContent(
+                                    type = "text",
+                                    text = "Query returned ${rows.size} rows"
+                                )
+                            ),
+                            structuredContent = result
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                ToolResult.error("Query failed: ${e.message}")
+            }
+        }
+    }
+    
+    suspend fun getSchema(): ToolResult {
+        return withContext(Dispatchers.IO) {
+            try {
+                dataSource.connection.use { conn ->
+                    val metadata = conn.metaData
+                    val schemas = mutableListOf<SchemaInfo>()
+                    
+                    val rs = metadata.getTables(null, null, "%", arrayOf("TABLE"))
+                    while (rs.next()) {
+                        val tableName = rs.getString("TABLE_NAME")
+                        val schemaName = rs.getString("TABLE_SCHEM")
+                        
+                        val columnsRs = metadata.getColumns(null, schemaName, tableName, "%")
+                        val columns = mutableListOf<ColumnInfo>()
+                        
+                        while (columnsRs.next()) {
+                            columns.add(
+                                ColumnInfo(
+                                    name = columnsRs.getString("COLUMN_NAME"),
+                                    type = columnsRs.getString("TYPE_NAME"),
+                                    nullable = columnsRs.getInt("NULLABLE") == 1,
+                                    defaultValue = columnsRs.getString("COLUMN_DEF")
+                                )
+                            )
+                        }
+                        
+                        schemas.add(
+                            SchemaInfo(
+                                schema = schemaName,
+                                table = tableName,
+                                columns = columns
+                            )
+                        )
+                    }
+                    
+                    ToolResult.success(
+                        content = listOf(
+                            TextContent(
+                                type = "text",
+                                text = "Retrieved schema for ${schemas.size} tables"
+                            )
+                        ),
+                        structuredContent = mapOf("schemas" to schemas)
+                    )
+                }
+            } catch (e: Exception) {
+                ToolResult.error("Schema retrieval failed: ${e.message}")
+            }
+        }
+    }
+    
+    private fun isReadOnlyQuery(sql: String): Boolean {
+        val normalized = sql.trim().uppercase()
+        val readOnlyPatterns = listOf("SELECT", "SHOW", "DESCRIBE", "EXPLAIN")
+        val writePatterns = listOf("INSERT", "UPDATE", "DELETE", "DROP", "CREATE", "ALTER")
+        
+        return readOnlyPatterns.any { normalized.startsWith(it) } &&
+               writePatterns.none { normalized.contains(it) }
+    }
+    
+    data class SchemaInfo(
+        val schema: String,
+        val table: String,
+        val columns: List<ColumnInfo>
+    )
+    
+    data class ColumnInfo(
+        val name: String,
+        val type: String,
+        val nullable: Boolean,
+        val defaultValue: String?
+    )
+}
+```
+
+#### 4.5.2 MongoDB Connector
+
+```kotlin
+class MongoDBModule(
+    private val config: MongoConfig
+) {
+    
+    data class MongoConfig(
+        val connectionString: String,
+        val database: String
+    )
+    
+    private val client by lazy {
+        MongoClient.create(config.connectionString)
+    }
+    
+    private val database by lazy {
+        client.getDatabase(config.database)
+    }
+    
+    data class FindRequest(
+        val collection: String,
+        val filter: String = "{}",
+        val limit: Int = 100,
+        val sort: String? = null
+    )
+    
+    suspend fun find(request: FindRequest): ToolResult {
+        return try {
+            val collection = database.getCollection(request.collection)
+            val filterDoc = BsonDocument.parse(request.filter)
+            
+            val query = collection.find(filterDoc).limit(request.limit)
+            
+            if (request.sort != null) {
+                val sortDoc = BsonDocument.parse(request.sort)
+                query.sort(sortDoc)
+            }
+            
+            val documents = query.toList()
+            
+            val result = mapOf(
+                "collection" to request.collection,
+                "documents" to documents.map { it.toJson() },
+                "count" to documents.size
+            )
+            
+            ToolResult.success(
+                content = listOf(
+                    TextContent(
+                        type = "text",
+                        text = "Found ${documents.size} documents in ${request.collection}"
+                    )
+                ),
+                structuredContent = result
+            )
+        } catch (e: Exception) {
+            ToolResult.error("MongoDB find failed: ${e.message}")
+        }
+    }
+    
+    suspend fun listCollections(): ToolResult {
+        return try {
+            val collections = database.listCollectionNames().toList()
+            
+            ToolResult.success(
+                content = listOf(
+                    TextContent(
+                        type = "text",
+                        text = "Found ${collections.size} collections"
+                    )
+                ),
+                structuredContent = mapOf("collections" to collections)
+            )
+        } catch (e: Exception) {
+            ToolResult.error("Failed to list collections: ${e.message}")
+        }
+    }
+}
+```
+
+### 4.6 Resource Management Module
+
+#### 4.6.1 Custom Documentation Management
+
+```kotlin
+class ResourceModule(
+    private val resourcesPath: Path
+) {
+    
+    data class ResourceMetadata(
+        val uri: String,
+        val name: String,
+        val mimeType: String,
+        val description: String?,
+        val size: Long,
+        val lastModified: Instant
+    )
+    
+    suspend fun listResources(): List<ResourceMetadata> {
+        return withContext(Dispatchers.IO) {
+            Files.walk(resourcesPath)
+                .filter { Files.isRegularFile(it) }
+                .map { file ->
+                    ResourceMetadata(
+                        uri = "resource://${resourcesPath.relativize(file)}",
+                        name = file.fileName.toString(),
+                        mimeType = Files.probeContentType(file) ?: "application/octet-stream",
+                        description = extractDescription(file),
+                        size = Files.size(file),
+                        lastModified = Files.getLastModifiedTime(file).toInstant()
+                    )
+                }
+                .toList()
+        }
+    }
+    
+    suspend fun readResource(uri: String): ResourceContent? {
+        return withContext(Dispatchers.IO) {
+            val path = resolveUri(uri) ?: return@withContext null
+            
+            if (!Files.exists(path)) {
+                return@withContext null
+            }
+            
+            val mimeType = Files.probeContentType(path) ?: "text/plain"
+            
+            when {
+                mimeType.startsWith("text/") || mimeType == "application/json" -> {
+                    TextResourceContent(
+                        uri = uri,
+                        mimeType = mimeType,
+                        text = path.readText()
+                    )
+                }
+                else -> {
+                    BlobResourceContent(
+                        uri = uri,
+                        mimeType = mimeType,
+                        blob = Base64.getEncoder().encodeToString(Files.readAllBytes(path))
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun resolveUri(uri: String): Path? {
+        if (!uri.startsWith("resource://")) {
+            return null
+        }
+        
+        val relativePath = uri.removePrefix("resource://")
+        val resolved = resourcesPath.resolve(relativePath).normalize()
+        
+        // Validate path is within resources directory
+        if (!resolved.startsWith(resourcesPath)) {
+            return null
+        }
+        
+        return resolved
+    }
+    
+    private fun extractDescription(file: Path): String? {
+        // Try to extract description from file metadata or first lines
+        if (file.toString().endsWith(".md")) {
+            val firstLines = file.readLines().take(5)
+            return firstLines.find { it.startsWith("#") }?.removePrefix("#")?.trim()
+        }
+        return null
+    }
+}
+
+sealed class ResourceContent {
+    abstract val uri: String
+    abstract val mimeType: String
+}
+
+data class TextResourceContent(
+    override val uri: String,
+    override val mimeType: String,
+    val text: String
+) : ResourceContent()
+
+data class BlobResourceContent(
+    override val uri: String,
+    override val mimeType: String,
+    val blob: String // Base64 encoded
+) : ResourceContent()
+```
+
+-----
+
+## 5\. Kotlin Implementation
+
+### 5.1 Project Structure
+
+```
+mcp-fullstack-server/
+├── build.gradle.kts
+├── settings.gradle.kts
+├── src/
+│   ├── main/
+│   │   ├── kotlin/
+│   │   │   └── com/
+│   │   │       └── apptolast/
+│   │   │           └── mcp/
+│   │   │               ├── Application.kt
+│   │   │               ├── server/
+│   │   │               │   ├── McpServerSetup.kt
+│   │   │               │   ├── ToolRegistry.kt
+│   │   │               │   └── ServerConfig.kt
+│   │   │               ├── modules/
+│   │   │               │   ├── filesystem/
+│   │   │               │   │   ├── FilesystemModule.kt
+│   │   │               │   │   └── FilesystemTools.kt
+│   │   │               │   ├── bash/
+│   │   │               │   │   ├── BashExecutor.kt
+│   │   │               │   │   └── BashTools.kt
+│   │   │               │   ├── github/
+│   │   │               │   │   ├── GitHubModule.kt
+│   │   │               │   │   └── GitHubTools.kt
+│   │   │               │   ├── memory/
+│   │   │               │   │   ├── MemoryModule.kt
+│   │   │               │   │   └── MemoryTools.kt
+│   │   │               │   ├── database/
+│   │   │               │   │   ├── PostgreSQLModule.kt
+│   │   │               │   │   ├── MongoDBModule.kt
+│   │   │               │   │   └── DatabaseTools.kt
+│   │   │               │   └── resources/
+│   │   │               │       ├── ResourceModule.kt
+│   │   │               │       └── ResourceTools.kt
+│   │   │               ├── transport/
+│   │   │               │   ├── StdioTransport.kt
+│   │   │               │   ├── SseTransport.kt
+│   │   │               │   └── HttpTransport.kt
+│   │   │               ├── security/
+│   │   │               │   ├── PathValidator.kt
+│   │   │               │   ├── CommandValidator.kt
+│   │   │               │   └── AuthMiddleware.kt
+│   │   │               └── util/
+│   │   │                   ├── JsonParser.kt
+│   │   │                   ├── Logger.kt
+│   │   │                   └── Extensions.kt
+│   │   └── resources/
+│   │       ├── application.conf
+│   │       └── logback.xml
+│   └── test/
+│       └── kotlin/
+│           └── com/
+│               └── apptolast/
+│                   └── mcp/
+│                       ├── modules/
+│                       └── integration/
+├── docker/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+└── k8s/
+    ├── deployment.yaml
+    ├── service.yaml
+    ├── configmap.yaml
+    └── secrets.yaml
+```
+
+### 5.2 Main MCP Server Implementation
+
+```kotlin
+// Application.kt
+package com.apptolast.mcp
+
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import io.ktor.server.sse.*
+import io.modelcontextprotocol.kotlin.sdk.server.Server
+import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
+import io.modelcontextprotocol.kotlin.sdk.Implementation
+import io.modelcontextprotocol.kotlin.sdk.server.mcp
+import com.apptolast.mcp.server.ToolRegistry
+import com.apptolast.mcp.server.ServerConfig
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
+fun main() {
+    logger.info { "Starting MCP Full-Stack Server..." }
+    
+    val config = ServerConfig.load()
+    val toolRegistry = ToolRegistry(config)
+    
+    embeddedServer(Netty, port = config.port, host = config.host) {
+        configureMcpServer(toolRegistry, config)
+    }.start(wait = true)
+}
+
+fun Application.configureMcpServer(
+    toolRegistry: ToolRegistry,
+    config: ServerConfig
+) {
+    install(SSE)
+    
+    mcp {
+        Server(
+            serverInfo = Implementation(
+                name = "mcp-fullstack-server",
+                version = "1.0.0"
+            ),
+            options = ServerOptions(
+                capabilities = ServerCapabilities(
+                    tools = ServerCapabilities.Tools(listChanged = true),
+                    resources = ServerCapabilities.Resources(
+                        subscribe = true,
+                        listChanged = true
+                    ),
+                    prompts = ServerCapabilities.Prompts(listChanged = true)
+                )
+            )
+        ) {
+            // Register all tools
+            toolRegistry.registerAllTools(this)
+            
+            logger.info { 
+                "MCP Server initialized with ${toolRegistry.toolCount} tools" 
+            }
+            
+            "MCP Full-Stack Server - Ready for autonomous application development"
+        }
+    }
+}
+```
+
+### 5.3 Tool Registry
+
+```kotlin
+// server/ToolRegistry.kt
+package com.apptolast.mcp.server
+
+import io.modelcontextprotocol.kotlin.sdk.server.Server
+import com.apptolast.mcp.modules.filesystem.FilesystemTools
+import com.apptolast.mcp.modules.bash.BashTools
+import com.apptolast.mcp.modules.github.GitHubTools
+import com.apptolast.mcp.modules.memory.MemoryTools
+import com.apptolast.mcp.modules.database.DatabaseTools
+import com.apptolast.mcp.modules.resources.ResourceTools
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
+class ToolRegistry(
+    private val config: ServerConfig
+) {
+    private val filesystemTools = FilesystemTools(config.filesystem)
+    private val bashTools = BashTools(config.bash)
+    private val githubTools = GitHubTools(config.github)
+    private val memoryTools = MemoryTools(config.memory)
+    private val databaseTools = DatabaseTools(config.database)
+    private val resourceTools = ResourceTools(config.resources)
+    
+    val toolCount: Int
+        get() = listOf(
+            filesystemTools,
+            bashTools,
+            githubTools,
+            memoryTools,
+            databaseTools,
+            resourceTools
+        ).sumOf { it.toolCount }
+    
+    fun registerAllTools(server: Server) {
+        logger.info { "Registering tools..." }
+        
+        // Filesystem tools
+        filesystemTools.register(server)
+        logger.info { "Registered ${filesystemTools.toolCount} filesystem tools" }
+        
+        // Bash execution tools
+        bashTools.register(server)
+        logger.info { "Registered ${bashTools.toolCount} bash tools" }
+        
+        // GitHub tools
+        githubTools.register(server)
+        logger.info { "Registered ${githubTools.toolCount} GitHub tools" }
+        
+        // Memory tools
+        memoryTools.register(server)
+        logger.info { "Registered ${memoryTools.toolCount} memory tools" }
+        
+        // Database tools
+        databaseTools.register(server)
+        logger.info { "Registered ${databaseTools.toolCount} database tools" }
+        
+        // Resource tools
+        resourceTools.register(server)
+        logger.info { "Registered ${resourceTools.toolCount} resource tools" }
+        
+        logger.info { "Total tools registered: $toolCount" }
+    }
+}
+```
+
+### 5.4 Configuration Management
+
+```kotlin
+// server/ServerConfig.kt
+package com.apptolast.mcp.server
+
+import com.typesafe.config.ConfigFactory
+import java.nio.file.Path
+import java.nio.file.Paths
+
+data class ServerConfig(
+    val host: String,
+    val port: Int,
+    val filesystem: FilesystemConfig,
+    val bash: BashConfig,
+    val github: GitHubConfig,
+    val memory: MemoryConfig,
+    val database: DatabaseConfig,
+    val resources: ResourcesConfig
+) {
+    companion object {
+        fun load(): ServerConfig {
+            val config = ConfigFactory.load()
+            
+            return ServerConfig(
+                host = config.getString("server.host"),
+                port = config.getInt("server.port"),
+                filesystem = FilesystemConfig(
+                    allowedDirectories = config.getStringList("filesystem.allowedDirectories")
+                        .map { Paths.get(it) },
+                    maxFileSize = config.getLong("filesystem.maxFileSize"),
+                    allowedExtensions = config.getStringList("filesystem.allowedExtensions").toSet()
+                ),
+                bash = BashConfig(
+                    allowedCommands = config.getStringList("bash.allowedCommands").toSet(),
+                    workingDirectory = Paths.get(config.getString("bash.workingDirectory")),
+                    timeoutSeconds = config.getLong("bash.timeoutSeconds")
+                ),
+                github = GitHubConfig(
+                    repoPath = Paths.get(config.getString("github.repoPath")),
+                    token = config.getString("github.token").takeIf { it.isNotBlank() }
+                ),
+                memory = MemoryConfig(
+                    storagePath = Paths.get(config.getString("memory.storagePath"))
+                ),
+                database = DatabaseConfig(
+                    postgresql = PostgreSQLConfig(
+                        host = config.getString("database.postgresql.host"),
+                        port = config.getInt("database.postgresql.port"),
+                        database = config.getString("database.postgresql.database"),
+                        username = config.getString("database.postgresql.username"),
+                        password = config.getString("database.postgresql.password")
+                    ),
+                    mongodb = MongoDBConfig(
+                        connectionString = config.getString("database.mongodb.connectionString"),
+                        database = config.getString("database.mongodb.database")
+                    )
+                ),
+                resources = ResourcesConfig(
+                    resourcesPath = Paths.get(config.getString("resources.path"))
+                )
+            )
+        }
+    }
+}
+
+data class FilesystemConfig(
+    val allowedDirectories: List<Path>,
+    val maxFileSize: Long,
+    val allowedExtensions: Set<String>
+)
+
+data class BashConfig(
+    val allowedCommands: Set<String>,
+    val workingDirectory: Path,
+    val timeoutSeconds: Long
+)
+
+data class GitHubConfig(
+    val repoPath: Path,
+    val token: String?
+)
+
+data class MemoryConfig(
+    val storagePath: Path
+)
+
+data class DatabaseConfig(
+    val postgresql: PostgreSQLConfig,
+    val mongodb: MongoDBConfig
+)
+
+data class PostgreSQLConfig(
+    val host: String,
+    val port: Int,
+    val database: String,
+    val username: String,
+    val password: String
+)
+
+data class MongoDBConfig(
+    val connectionString: String,
+    val database: String
+)
+
+data class ResourcesConfig(
+    val resourcesPath: Path
+)
+```
+
+### 5.5 Configuration File
+
+```hocon
+# src/main/resources/application.conf
+
+server {
+  host = "0.0.0.0"
+  host = ${?MCP_HOST}
+  
+  port = 3000
+  port = ${?MCP_PORT}
+}
+
+filesystem {
+  allowedDirectories = [
+    "/workspace",
+    "/home/claude/projects",
+    "/tmp/mcp-builds"
+  ]
+  allowedDirectories = ${?MCP_ALLOWED_DIRS}
+  
+  maxFileSize = 10485760  # 10MB
+  maxFileSize = ${?MCP_MAX_FILE_SIZE}
+  
+  allowedExtensions = [
+    "kt", "java", "js", "ts", "py", "go", "rs",
+    "json", "yaml", "yml", "toml", "xml",
+    "md", "txt", "html", "css", "scss",
+    "sh", "bash", "zsh",
+    "sql", "graphql",
+    "Dockerfile", "Makefile"
+  ]
+}
+
+bash {
+  allowedCommands = [
+    "ls", "cat", "grep", "find", "echo", "pwd",
+    "mkdir", "touch", "mv", "cp", "rm",
+    "git", "npm", "yarn", "pnpm",
+    "gradle", "gradlew", "kotlinc", "javac",
+    "docker", "docker-compose",
+    "kubectl", "helm",
+    "curl", "wget", "jq"
+  ]
+  allowedCommands = ${?MCP_ALLOWED_COMMANDS}
+  
+  workingDirectory = "/workspace"
+  workingDirectory = ${?MCP_WORKING_DIR}
+  
+  timeoutSeconds = 300  # 5 minutes
+  timeoutSeconds = ${?MCP_COMMAND_TIMEOUT}
+}
+
+github {
+  repoPath = "/workspace/repo"
+  repoPath = ${?MCP_REPO_PATH}
+  
+  token = ""
+  token = ${?GITHUB_TOKEN}
+}
+
+memory {
+  storagePath = "/workspace/.mcp-memory"
+  storagePath = ${?MCP_MEMORY_PATH}
+}
+
+database {
+  postgresql {
+    host = "localhost"
+    host = ${?POSTGRES_HOST}
+    
+    port = 5432
+    port = ${?POSTGRES_PORT}
+    
+    database = "mcp_db"
+    database = ${?POSTGRES_DB}
+    
+    username = "postgres"
+    username = ${?POSTGRES_USER}
+    
+    password = ""
+    password = ${?POSTGRES_PASSWORD}
+  }
+  
+  mongodb {
+    connectionString = "mongodb://localhost:27017"
+    connectionString = ${?MONGODB_CONNECTION_STRING}
+    
+    database = "mcp_db"
+    database = ${?MONGODB_DB}
+  }
+}
+
+resources {
+  path = "/workspace/resources"
+  path = ${?MCP_RESOURCES_PATH}
+}
+```
+
+-----
+
+## 6\. Kubernetes Integration
+
+### 6.1 Optimized Dockerfile
+
+```dockerfile
+# docker/Dockerfile
+
+# Build stage
+FROM gradle:8.10-jdk21 AS builder
+
+WORKDIR /app
+
+# Copy gradle files
+COPY build.gradle.kts settings.gradle.kts ./
+COPY gradle.properties ./
+
+# Download dependencies
+RUN gradle dependencies --no-daemon
+
+# Copy source code
+COPY src ./src
+
+# Build application
+RUN gradle clean build --no-daemon -x test
+
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Install required tools
+RUN apk add --no-cache \
+    bash \
+    git \
+    curl \
+    jq \
+    postgresql-client \
+    mongodb-tools
+
+# Create non-root user
+RUN addgroup -g 1000 mcp && \
+    adduser -u 1000 -G mcp -s /bin/bash -D mcp
+
+# Copy built application
+COPY --from=builder /app/build/libs/*.jar ./app.jar
+
+# Create workspace directories
+RUN mkdir -p /workspace /workspace/.mcp-memory /workspace/resources && \
+    chown -R mcp:mcp /workspace
+
+USER mcp
+
+# Environment variables
+ENV MCP_HOST=0.0.0.0
+ENV MCP_PORT=3000
+ENV MCP_WORKING_DIR=/workspace
+
+EXPOSE 3000 3001
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+### 6.2 Kubernetes Deployment
+
+```yaml
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-fullstack-server
+  namespace: cyberlab
+  labels:
+    app: mcp-server
+    version: v1.0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-server
+  template:
+    metadata:
+      labels:
+        app: mcp-server
+        version: v1.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3001"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: mcp-server
+      containers:
+      - name: mcp-server
+        image: apptolast.com/mcp-fullstack-server:1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        - name: metrics
+          containerPort: 3001
+          protocol: TCP
+        env:
+        - name: MCP_HOST
+          value: "0.0.0.0"
+        - name: MCP_PORT
+          value: "3000"
+        - name: MCP_WORKING_DIR
+          value: "/workspace"
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: github-token
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: postgres-host
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: postgres-port
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: postgres-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: postgres-password
+        - name: MONGODB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: mcp-secrets
+              key: mongodb-connection-string
+        - name: MONGODB_DB
+          valueFrom:
+            configMapKeyRef:
+              name: mcp-config
+              key: mongodb-db
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        volumeMounts:
+        - name: workspace
+          mountPath: /workspace
+        - name: memory-storage
+          mountPath: /workspace/.mcp-memory
+        - name: resources
+          mountPath: /workspace/resources
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      volumes:
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: mcp-workspace-pvc
+      - name: memory-storage
+        persistentVolumeClaim:
+          claimName: mcp-memory-pvc
+      - name: resources
+        configMap:
+          name: mcp-resources
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mcp-workspace-pvc
+  namespace: cyberlab
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mcp-memory-pvc
+  namespace: cyberlab
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+```
+
+### 6.3 Kubernetes Service
+
+```yaml
+# k8s/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-fullstack-server
+  namespace: cyberlab
+  labels:
+    app: mcp-server
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  - name: metrics
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  selector:
+    app: mcp-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server-external
+  namespace: cyberlab
+  labels:
+    app: mcp-server
+spec:
+  type: NodePort
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+    nodePort: 30000
+    protocol: TCP
+  selector:
+    app: mcp-server
+```
+
+### 6.4 ConfigMap
+
+```yaml
+# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-config
+  namespace: cyberlab
+data:
+  postgres-host: "postgres.cyberlab.svc.cluster.local"
+  postgres-port: "5432"
+  postgres-db: "mcp_applications"
+  mongodb-db: "mcp_applications"
+  
+  # Filesystem configuration
+  allowed-directories: |
+    /workspace
+    /workspace/projects
+    /tmp/mcp-builds
+  
+  # Bash configuration
+  allowed-commands: |
+    ls,cat,grep,find,echo,pwd
+    mkdir,touch,mv,cp,rm
+    git,npm,gradle,kotlinc
+    docker,kubectl,curl,wget
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcp-resources
+  namespace: cyberlab
+data:
+  kotlin-best-practices.md: |
+    # Kotlin Best Practices for Full-Stack Development
+    
+    ## Project Structure
+    - Use multi-module projects for large applications
+    - Separate business logic from framework code
+    - Follow clean architecture principles
+    
+    ## Code Style
+    - Use Kotlin idioms (data classes, sealed classes, etc.)
+    - Prefer immutability
+    - Use coroutines for async operations
+    
+    ## Testing
+    - Write unit tests with Kotest
+    - Use MockK for mocking
+    - Implement integration tests
+  
+  docker-guidelines.md: |
+    # Docker Best Practices
+    
+    ## Dockerfile
+    - Use multi-stage builds
+    - Minimize layers
+    - Use specific base image versions
+    - Don't run as root
+    
+    ## Security
+    - Scan images for vulnerabilities
+    - Use minimal base images
+    - Keep secrets out of images
+```
+
+### 6.5 Secrets
+
+```yaml
+# k8s/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mcp-secrets
+  namespace: cyberlab
+type: Opaque
+stringData:
+  github-token: "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  postgres-user: "mcp_user"
+  postgres-password: "secure_password_here"
+  mongodb-connection-string: "mongodb://user:password@mongodb.cyberlab.svc.cluster.local:27017"
+```
+
+### 6.6 ServiceAccount and RBAC
+
+```yaml
+# k8s/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mcp-server
+  namespace: cyberlab
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mcp-server-role
+  namespace: cyberlab
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mcp-server-binding
+  namespace: cyberlab
+subjects:
+- kind: ServiceAccount
+  name: mcp-server
+  namespace: cyberlab
+roleRef:
+  kind: Role
+  name: mcp-server-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+-----
+
+## 7\. Configuration and Deployment
+
+### 7.1 Build and Push Image
+
+```bash
+#!/bin/bash
+# build-and-push.sh
+
+set -e
+
+VERSION="1.0.0"
+REGISTRY="apptolast.com"
+IMAGE_NAME="mcp-fullstack-server"
+
+echo "🏗️  Building MCP Full-Stack Server..."
+
+# Build with Gradle
+./gradlew clean build -x test
+
+# Build Docker image
+docker build -t ${REGISTRY}/${IMAGE_NAME}:${VERSION} -f docker/Dockerfile .
+docker tag ${REGISTRY}/${IMAGE_NAME}:${VERSION} ${REGISTRY}/${IMAGE_NAME}:latest
+
+# Push to registry
+echo "📤 Pushing to registry..."
+docker push ${REGISTRY}/${IMAGE_NAME}:${VERSION}
+docker push ${REGISTRY}/${IMAGE_NAME}:latest
+
+echo "✅ Build and push completed!"
+```
+
+### 7.2 Deploy to Kubernetes
+
+```bash
+#!/bin/bash
+# deploy.sh
+
+set -e
+
+NAMESPACE="cyberlab"
+
+echo "🚀 Deploying MCP Full-Stack Server to Kubernetes..."
+
+# Create namespace if it doesn't exist
+kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+
+# Apply configurations
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
+kubectl apply -f k8s/rbac.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+
+# Wait for deployment
+echo "⏳ Waiting for deployment to be ready..."
+kubectl wait --for=condition=available --timeout=300s \
+  deployment/mcp-fullstack-server -n ${NAMESPACE}
+
+# Get service info
+echo "📊 Service Information:"
+kubectl get svc mcp-fullstack-server -n ${NAMESPACE}
+
+echo "✅ Deployment completed!"
+echo ""
+echo "📝 To check logs:"
+echo "kubectl logs -f deployment/mcp-fullstack-server -n ${NAMESPACE}"
+echo ""
+echo "🔗 Access the server:"
+echo "kubectl port-forward svc/mcp-fullstack-server 3000:3000 -n ${NAMESPACE}"
+```
+
+### 7.3 Local Configuration for Claude Desktop
+
+To connect Claude Desktop to the MCP Server:
+
+```json
+// ~/.config/claude/claude_desktop_config.json
+{
+  "mcpServers": {
+    "fullstack-server": {
+      "command": "kubectl",
+      "args": [
+        "port-forward",
+        "svc/mcp-fullstack-server",
+        "3000:3000",
+        "-n",
+        "cyberlab"
+      ],
+      "env": {
+        "KUBECONFIG": "/home/admin/.kube/config"
+      }
+    }
+  }
+}
+```
+
+-----
+
+## 8\. Security System
+
+### 8.1 Security Principles
+
+#### 8.1.1 Defense in Depth
+
+```kotlin
+// security/SecurityLayer.kt
+package com.apptolast.mcp.security
+
+class SecurityLayer {
+    
+    // 1. Path Validation
+    object PathValidator {
+        fun validate(path: String, allowedRoots: List<Path>): Result<Path> {
+            val normalized = Paths.get(path).normalize().toAbsolutePath()
+            
+            // Check for path traversal
+            if (path.contains("..") || path.contains("./")) {
+                return Result.failure(
+                    SecurityException("Path traversal detected")
+                )
+            }
+            
+            // Check if within allowed roots
+            val isAllowed = allowedRoots.any { root ->
+                try {
+                    normalized.startsWith(root.toRealPath())
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            
+            if (!isAllowed) {
+                return Result.failure(
+                    SecurityException("Access denied: path outside allowed directories")
+                )
+            }
+            
+            return Result.success(normalized)
+        }
+    }
+    
+    // 2. Command Validation
+    object CommandValidator {
+        private val DANGEROUS_PATTERNS = listOf(
+            Regex("rm\\s+-rf\\s+/"),
+            Regex("dd\\s+if="),
+            Regex(":(){ :|:& };:"),  // Fork bomb
+            Regex("mkfs\\."),
+            Regex("sudo"),
+            Regex("su\\s+"),
+            Regex("chmod\\s+777")
+        )
+        
+        fun validate(command: String, allowedCommands: Set<String>): Result<String> {
+            // Check if command is in allowed list
+            val baseCommand = command.trim().split(" ").first()
+            if (!allowedCommands.contains(baseCommand)) {
+                return Result.failure(
+                    SecurityException("Command not allowed: $baseCommand")
+                )
+            }
+            
+            // Check for dangerous patterns
+            DANGEROUS_PATTERNS.forEach { pattern ->
+                if (pattern.containsMatchIn(command)) {
+                    return Result.failure(
+                        SecurityException("Dangerous pattern detected in command")
+                    )
+                }
+            }
+            
+            return Result.success(command)
+        }
+    }
+    
+    // 3. Input Sanitization
+    object InputSanitizer {
+        fun sanitizeFilename(filename: String): String {
+            return filename
+                .replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                .take(255)
+        }
+        
+        fun sanitizeSql(sql: String): Result<String> {
+            val dangerous = listOf(
+                "DROP", "DELETE", "TRUNCATE", "ALTER", 
+                "CREATE", "INSERT", "UPDATE", "GRANT", "REVOKE"
+            )
+            
+            val upperSql = sql.uppercase()
+            dangerous.forEach { keyword ->
+                if (upperSql.contains(keyword)) {
+                    return Result.failure(
+                        SecurityException("Dangerous SQL keyword detected: $keyword")
+                    )
+                }
+            }
+            
+            return Result.success(sql)
+        }
+    }
+    
+    // 4. Rate Limiting
+    class RateLimiter(
+        private val maxRequests: Int,
+        private val windowSeconds: Long
+    ) {
+        private val requests = ConcurrentHashMap<String, MutableList<Instant>>()
+        
+        fun checkLimit(clientId: String): Boolean {
+            val now = Clock.System.now()
+            val windowStart = now.minus(windowSeconds.seconds)
+            
+            val clientRequests = requests.getOrPut(clientId) { mutableListOf() }
+            
+            // Remove old requests
+            clientRequests.removeIf { it < windowStart }
+            
+            if (clientRequests.size >= maxRequests) {
+                return false
+            }
+            
+            clientRequests.add(now)
+            return true
+        }
+    }
+}
+```
+
+### 8.2 Audit Logging
+
+```kotlin
+// security/AuditLogger.kt
+package com.apptolast.mcp.security
+
+import kotlinx.serialization.Serializable
+import kotlinx.datetime.Instant
+import kotlinx.datetime.Clock
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
+@Serializable
+data class AuditEvent(
+    val timestamp: Instant,
+    val eventType: AuditEventType,
+    val clientId: String?,
+    val tool: String,
+    val action: String,
+    val success: Boolean,
+    val details: Map<String, String> = emptyMap(),
+    val error: String? = null
+)
+
+enum class AuditEventType {
+    FILESYSTEM_OPERATION,
+    BASH_EXECUTION,
+    DATABASE_QUERY,
+    GITHUB_OPERATION,
+    MEMORY_ACCESS,
+    RESOURCE_ACCESS
+}
+
+object AuditLogger {
+    private val auditLog = mutableListOf<AuditEvent>()
+    
+    fun log(event: AuditEvent) {
+        auditLog.add(event)
+        
+        // Log to standard logger
+        val logMessage = buildString {
+            append("[AUDIT] ")
+            append("type=${event.eventType} ")
+            append("client=${event.clientId ?: "unknown"} ")
+            append("tool=${event.tool} ")
+            append("action=${event.action} ")
+            append("success=${event.success}")
+            if (event.error != null) {
+                append(" error=${event.error}")
+            }
+        }
+        
+        if (event.success) {
+            logger.info { logMessage }
+        } else {
+            logger.warn { logMessage }
+        }
+        
+        // Could also persist to database or external logging service
+    }
+    
+    fun getAuditTrail(
+        clientId: String? = null,
+        eventType: AuditEventType? = null,
+        limit: Int = 100
+    ): List<AuditEvent> {
+        return auditLog
+            .asSequence()
+            .let { seq ->
+                if (clientId != null) {
+                    seq.filter { it.clientId == clientId }
+                } else seq
+            }
+            .let { seq ->
+                if (eventType != null) {
+                    seq.filter { it.eventType == eventType }
+                } else seq
+            }
+            .take(limit)
+            .toList()
+            .sortedByDescending { it.timestamp }
+    }
+}
+```
+
+-----
+
+## 9\. Monitoring and Observability
+
+### 9.1 Metrics with Prometheus
+
+```kotlin
+// monitoring/Metrics.kt
+package com.apptolast.mcp.monitoring
+
+import io.prometheus.client.Counter
+import io.prometheus.client.Histogram
+import io.prometheus.client.Gauge
+
+object Metrics {
+    
+    // Tool invocation metrics
+    val toolInvocations = Counter.build()
+        .name("mcp_tool_invocations_total")
+        .help("Total number of tool invocations")
+        .labelNames("tool", "status")
+        .register()
+    
+    val toolDuration = Histogram.build()
+        .name("mcp_tool_duration_seconds")
+        .help("Tool execution duration in seconds")
+        .labelNames("tool")
+        .buckets(0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0)
+        .register()
+    
+    // Filesystem metrics
+    val filesystemOperations = Counter.build()
+        .name("mcp_filesystem_operations_total")
+        .help("Total filesystem operations")
+        .labelNames("operation", "status")
+        .register()
+    
+    val fileSize = Histogram.build()
+        .name("mcp_file_size_bytes")
+        .help("Size of files accessed")
+        .buckets(1024.0, 10240.0, 102400.0, 1048576.0, 10485760.0)
+        .register()
+    
+    // Bash execution metrics
+    val bashExecutions = Counter.build()
+        .name("mcp_bash_executions_total")
+        .help("Total bash command executions")
+        .labelNames("command", "status")
+        .register()
+    
+    val bashDuration = Histogram.build()
+        .name("mcp_bash_duration_seconds")
+        .help("Bash command execution duration")
+        .buckets(0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0)
+        .register()
+    
+    // Database metrics
+    val databaseQueries = Counter.build()
+        .name("mcp_database_queries_total")
+        .help("Total database queries")
+        .labelNames("database_type", "status")
+        .register()
+    
+    val queryDuration = Histogram.build()
+        .name("mcp_query_duration_seconds")
+        .help("Database query execution duration")
+        .labelNames("database_type")
+        .buckets(0.01, 0.05, 0.1, 0.5, 1.0, 5.0)
+        .register()
+    
+    // Memory (Knowledge Graph) metrics
+    val knowledgeGraphSize = Gauge.build()
+        .name("mcp_knowledge_graph_entities")
+        .help("Number of entities in knowledge graph")
+        .register()
+    
+    val memoryOperations = Counter.build()
+        .name("mcp_memory_operations_total")
+        .help("Total memory operations")
+        .labelNames("operation", "status")
+        .register()
+    
+    // System metrics
+    val activeConnections = Gauge.build()
+        .name("mcp_active_connections")
+        .help("Number of active MCP connections")
+        .register()
+    
+    val errors = Counter.build()
+        .name("mcp_errors_total")
+        .help("Total number of errors")
+        .labelNames("module", "error_type")
+        .register()
+}
+```
+
+### 9.2 Health Checks
+
+```kotlin
+// monitoring/HealthCheck.kt
+package com.apptolast.mcp.monitoring
+
+import kotlinx.serialization.Serializable
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+
+@Serializable
+data class HealthStatus(
+    val status: Status,
+    val timestamp: Instant,
+    val components: Map<String, ComponentHealth>
+) {
+    enum class Status {
+        HEALTHY,
+        DEGRADED,
+        UNHEALTHY
+    }
+}
+
+@Serializable
+data class ComponentHealth(
+    val status: HealthStatus.Status,
+    val message: String? = null,
+    val details: Map<String, String> = emptyMap()
+)
+
+class HealthCheckService(
+    private val components: List<HealthCheckComponent>
+) {
+    
+    suspend fun check(): HealthStatus {
+        val componentHealths = components.associate { component ->
+            component.name to component.check()
+        }
+        
+        val overallStatus = when {
+            componentHealths.all { it.value.status == HealthStatus.Status.HEALTHY } ->
+                HealthStatus.Status.HEALTHY
+            componentHealths.any { it.value.status == HealthStatus.Status.UNHEALTHY } ->
+                HealthStatus.Status.UNHEALTHY
+            else ->
+                HealthStatus.Status.DEGRADED
+        }
+        
+        return HealthStatus(
+            status = overallStatus,
+            timestamp = Clock.System.now(),
+            components = componentHealths
+        )
+    }
+}
+
+interface HealthCheckComponent {
+    val name: String
+    suspend fun check(): ComponentHealth
+}
+
+// Example implementation
+class DatabaseHealthCheck(
+    private val dataSource: DataSource
+) : HealthCheckComponent {
+    
+    override val name = "database"
+    
+    override suspend fun check(): ComponentHealth {
+        return try {
+            val connection = dataSource.connection
+            val isValid = connection.isValid(5)
+            connection.close()
+            
+            if (isValid) {
+                ComponentHealth(
+                    status = HealthStatus.Status.HEALTHY,
+                    message = "Database connection is healthy"
+                )
+            } else {
+                ComponentHealth(
+                    status = HealthStatus.Status.UNHEALTHY,
+                    message = "Database connection is invalid"
+                )
+            }
+        } catch (e: Exception) {
+            ComponentHealth(
+                status = HealthStatus.Status.UNHEALTHY,
+                message = "Database connection failed: ${e.message}"
+            )
+        }
+    }
+}
+```
+
+### 9.3 Grafana Dashboard
+
+```json
+// monitoring/grafana-dashboard.json
+{
+  "dashboard": {
+    "title": "MCP Full-Stack Server",
+    "tags": ["mcp", "kubernetes"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "Tool Invocations Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(mcp_tool_invocations_total[5m])",
+            "legendFormat": "{{tool}}"
+          }
+        ]
+      },
+      {
+        "title": "Tool Duration (p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(mcp_tool_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{tool}}"
+          }
+        ]
+      },
+      {
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(mcp_errors_total[5m])",
+            "legendFormat": "{{module}} - {{error_type}}"
+          }
+        ]
+      },
+      {
+        "title": "Knowledge Graph Size",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "mcp_knowledge_graph_entities"
+          }
+        ]
+      },
+      {
+        "title": "Active Connections",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "mcp_active_connections"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+-----
+
+## 10\. Implementation Roadmap
+
+### 10.1 Phase 1: Foundations (Weeks 1-2)
+
+**Objectives:**
+
+  * ✅ Set up Kotlin project with Gradle
+  * ✅ Implement MCP Server core
+  * ✅ Develop Filesystem module
+  * ✅ Develop Bash Execution module
+  * ✅ Implement basic security system
+
+**Deliverables:**
+
+  * Compilable Kotlin project
+  * Functional MCP Server with Stdio transport
+  * 2 operational modules (Filesystem + Bash)
+  * Basic unit tests
+
+### 10.2 Phase 2: Git and Memory Integration (Weeks 3-4)
+
+**Objectives:**
+
+  * ✅ Implement GitHub Integration module
+  * ✅ Develop Knowledge Graph Memory
+  * ✅ Add Resources module
+  * ✅ Implement audit logging
+
+**Deliverables:**
+
+  * Fully functional Git module
+  * Persistent memory system
+  * Custom documentation system
+  * Audit logs
+
+### 10.3 Phase 3: Databases (Weeks 5-6)
+
+**Objectives:**
+
+  * ✅ Implement PostgreSQL connector
+  * ✅ Implement MongoDB connector
+  * ✅ Implement MySQL connector (optional)
+  * ✅ Add query validation and sanitization
+
+**Deliverables:**
+
+  * 3 functional DB connectors
+  * SQL validation system
+  * Integration tests with real DBs
+
+### 10.4 Phase 4: Containerization and K8s (Week 7)
+
+**Objectives:**
+
+  * ✅ Create optimized Dockerfile
+  * ✅ Configure Kubernetes deployment
+  * ✅ Implement health checks
+  * ✅ Configure persistent volumes
+
+**Deliverables:**
+
+  * Functional Docker image
+  * Complete K8s manifests
+  * Deployment on the `archlinux-desktop-0` pod
+
+### 10.5 Phase 5: Observability and Testing (Week 8)
+
+**Objectives:**
+
+  * ✅ Integrate Prometheus metrics
+  * ✅ Configure Grafana dashboards
+  * ✅ Implement end-to-end tests
+  * ✅ Performance optimization
+
+**Deliverables:**
+
+  * Complete metrics system
+  * Monitoring dashboards
+  * E2E test suite
+  * Complete technical documentation
+
+### 10.6 Phase 6: Hardening and Production (Weeks 9-10)
+
+**Objectives:**
+
+  * ✅ Complete security audit
+  * ✅ Performance tuning
+  * ✅ Disaster recovery plan
+  * ✅ Operations documentation
+
+**Deliverables:**
+
+  * Production-ready system
+  * Operational runbooks
+  * Backup/restore plan
+  * Troubleshooting manual
+
+-----
+
+## 11\. Usage Examples
+
+### 11.1 Create a Spring Boot Application from Claude
+
+**Prompt to LLM:**
+
+> Create a Spring Boot REST API to manage tasks (TODO app)
+> with the following features:
+>
+>   - Full CRUD for tasks
+>   - PostgreSQL as the database
+>   - Docker Compose for local development
+>   - Unit and integration tests
+>   - Dockerfile for production
+>   - README with instructions
+
+**Sequence of Tools invoked by the AI:**
+
+1.  `create_directory`: Create project structure
+2.  `write_file`: Generate `build.gradle.kts`
+3.  `write_file`: Create `Application.kt`
+4.  `write_file`: Create `TaskController.kt`
+5.  `write_file`: Create `TaskService.kt`
+6.  `write_file`: Create `TaskRepository.kt`
+7.  `write_file`: Create `Task.kt` (Entity)
+8.  `write_file`: Create `application.yml`
+9.  `write_file`: Create `Dockerfile`
+10. `write_file`: Create `docker-compose.yml`
+11. `write_file`: Create tests
+12. `bash_execute`: `gradle build`
+13. `bash_execute`: `docker-compose up -d`
+14. `postgres_query`: Verify DB connection
+15. `git_init`: Initialize repository
+16. `git_commit`: Initial commit
+17. `write_file`: Generate `README.md`
+18. `create_entities`: Save metadata in Knowledge Graph
+
+### 11.2 Debug and Improve an Existing Application
+
+**Prompt to LLM:**
+
+> Analyze the project in `/workspace/my-app` and:
+>
+> 1.  Identify performance issues
+> 2.  Suggest architectural improvements
+> 3.  Update obsolete dependencies
+> 4.  Add missing tests
+> 5.  Document changes in the Knowledge Graph
+
+**Sequence of Tools:**
+
+1.  `list_directory`: Explore structure
+2.  `read_file`: Read `build.gradle.kts`
+3.  `read_file`: Read source code
+4.  `postgres_query`: Analyze slow queries
+5.  `search_nodes`: Search for previous context in memory
+6.  `bash_execute`: `gradle dependencies`
+7.  `write_file`: Update dependencies
+8.  `write_file`: Refactor code
+9.  `write_file`: Add tests
+10. `bash_execute`: `gradle test`
+11. `git_commit`: Commit improvements
+12. `create_relations`: Relate changes in Knowledge Graph
+
+-----
+
+## 12\. Additional Considerations
+
+### 12.1 Horizontal Scalability
+
+To scale the MCP Server horizontally:
+
+```yaml
+# k8s/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mcp-server-hpa
+  namespace: cyberlab
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mcp-fullstack-server
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+```
+
+### 12.2 Backup and Disaster Recovery
+
+```bash
+#!/bin/bash
+# backup-mcp-data.sh
+
+NAMESPACE="cyberlab"
+BACKUP_DIR="/backup/mcp/$(date +%Y%m%d_%H%M%S)"
+
+mkdir -p ${BACKUP_DIR}
+
+# Backup Knowledge Graph
+kubectl exec -n ${NAMESPACE} deployment/mcp-fullstack-server -- \
+  tar czf - /workspace/.mcp-memory | \
+  cat > ${BACKUP_DIR}/knowledge-graph.tar.gz
+
+# Backup workspace
+kubectl exec -n ${NAMESPACE} deployment/mcp-fullstack-server -- \
+  tar czf - /workspace/projects | \
+  cat > ${BACKUP_DIR}/workspace.tar.gz
+
+# Backup PostgreSQL
+kubectl exec -n ${NAMESPACE} deployment/postgres -- \
+  pg_dump -U mcp_user mcp_applications | \
+  gzip > ${BACKUP_DIR}/postgres.sql.gz
+
+# Backup MongoDB
+kubectl exec -n ${NAMESPACE} deployment/mongodb -- \
+  mongodump --archive | \
+  gzip > ${BACKUP_DIR}/mongodb.archive.gz
+
+echo "✅ Backup completed: ${BACKUP_DIR}"
+```
+
+### 12.3 CI/CD Pipeline
+
+```yaml
+# .github/workflows/ci-cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+    
+    - name: Run tests
+      run: ./gradlew test
+    
+    - name: Run integration tests
+      run: ./gradlew integrationTest
+    
+    - name: Generate test report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: Test Results
+        path: build/test-results/**/*.xml
+        reporter: java-junit
+  
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    
+    - name: Build with Gradle
+      run: ./gradlew build -x test
+    
+    - name: Build Docker image
+      run: |
+        docker build -t apptolast.com/mcp-fullstack-server:${{ github.sha }} .
+        docker tag apptolast.com/mcp-fullstack-server:${{ github.sha }} \
+                   apptolast.com/mcp-fullstack-server:latest
+    
+    - name: Push to registry
+      run: |
+        echo ${{ secrets.REGISTRY_PASSWORD }} | docker login apptolast.com -u ${{ secrets.REGISTRY_USER }} --password-stdin
+        docker push apptolast.com/mcp-fullstack-server:${{ github.sha }}
+        docker push apptolast.com/mcp-fullstack-server:latest
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: Configure kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl set image deployment/mcp-fullstack-server \
+          mcp-server=apptolast.com/mcp-fullstack-server:${{ github.sha }} \
+          -n cyberlab
+        
+        kubectl rollout status deployment/mcp-fullstack-server -n cyberlab
+    
+    - name: Verify deployment
+      run: |
+        kubectl get pods -n cyberlab -l app=mcp-server
+```
+
+-----
+
+## 13\. Conclusions and Next Steps
+
+### 13.1 Summary of Capabilities
+
+This technical document presents a complete, production-ready solution for an MCP Server in Kotlin that enables AIs with:
+
+  * ✅ **Autonomous Full-Stack Development**
+      * Create complete applications from scratch
+      * Modify and refactor existing code
+      * Manage dependencies and build systems
+  * ✅ **Infrastructure Operations**
+      * Execute bash commands safely
+      * Interact with file systems
+      * Manage Docker containers
+  * ✅ **Version Control**
+      * Full integration with Git/GitHub
+      * Automatic commits, pushes, and branches
+      * Code review and PRs
+  * ✅ **Persistence and Memory**
+      * Knowledge Graph for historical context
+      * Multiple databases supported
+      * Custom documentation
+  * ✅ **Security and Compliance**
+      * Command and path validation
+      * Complete audit logging
+      * Rate limiting and access control
+
+### 13.2 Recommended Next Steps
+
+  * **Short-Term (1-2 months):**
+      * Implement the project following the roadmap
+      * Perform exhaustive testing in a development environment
+      * Optimize performance based on metrics
+      * Complete operations documentation
+  * **Mid-Term (3-6 months):**
+      * Add support for more languages (Python, Go, etc.)
+      * Implement a plugin system
+      * Create a marketplace for custom tools
+      * Enhance Knowledge Graph with ML
+  * **Long-Term (6-12 months):**
+      * Multi-tenancy and project-based isolation
+      * Integration with more cloud services
+      * AI-based recommendation system
+      * Infrastructure auto-optimization
+
+### 13.3 Additional Resources
+
+  * **MCP Documentation:** [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
+  * **Kotlin SDK:** [https://github.com/modelcontextprotocol/kotlin-sdk](https://github.com/modelcontextprotocol/kotlin-sdk)
+  * **Servers Repository:** [https://github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
+  * **Community:** [https://github.com/orgs/modelcontextprotocol/discussions](https://github.com/orgs/modelcontextprotocol/discussions)
+
+-----
+
+## Appendices
+
+### A. Glossary of Terms
+
+  * **MCP:** Model Context Protocol
+  * **Tool:** A function the AI can invoke
+  * **Resource:** Content the AI can read
+  * **Prompt:** An interaction template for the AI
+  * **Knowledge Graph:** A graph of entities and relations for memory
+  * **Transport:** Communication mechanism (Stdio, HTTP, SSE)
+
+### B. FAQ
+
+  * **Q: Can the AI execute dangerous commands?**
+      * **A:** No. All commands go through strict validation against a whitelist.
+  * **Q: How does the system scale?**
+      * **A:** Using Kubernetes HPA based on CPU/memory and custom metrics.
+  * **Q: Does data persist between restarts?**
+      * **A:** Yes, using PersistentVolumeClaims in Kubernetes.
+  * **Q: What happens if the server fails?**
+      * **A:** Kubernetes automatically restarts the pod. Data persists.
+
+### C. Troubleshooting
+
+  * **Problem:** "Access denied: path outside allowed directories"
+      * **Solution:** Verify the path is in `allowedDirectories` in the ConfigMap.
+  * **Problem:** "Command not allowed"
+      * **Solution:** Add the command to `allowedCommands` in the configuration.
+  * **Problem:** "Database connection failed"
+      * **Solution:** Verify credentials in Secrets and network connectivity.
+
+-----
+
+**Complete Technical Document - MCP Full-Stack Server v1.0**
+**Author:** Claude (Anthropic) + Pablo Hurtado
+**Last Updated:** November 12, 2025
