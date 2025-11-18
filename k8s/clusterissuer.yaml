@@ -1,0 +1,42 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt production server
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email for certificate expiration notifications
+    # IMPORTANT: Change this to your email
+    email: admin@apptolast.com
+
+    # Secret to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+
+    # HTTP-01 challenge provider using Traefik
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
+---
+# Optional: Staging issuer for testing
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # Let's Encrypt staging server (for testing, uses fake certificates)
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    email: admin@apptolast.com
+
+    privateKeySecretRef:
+      name: letsencrypt-staging-key
+
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
