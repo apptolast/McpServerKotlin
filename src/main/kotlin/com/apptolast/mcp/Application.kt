@@ -206,7 +206,7 @@ suspend fun handleMcpRequest(request: JsonRpcRequest, toolRegistry: ToolRegistry
                 val message = result.content.firstOrNull()?.let { 
                     when (it) {
                         is TextContent -> it.text
-                        else -> "Tool execution failed"
+                        else -> "Tool execution failed: unexpected content type ${it::class.simpleName}"
                     }
                 } ?: "Tool execution failed"
                 

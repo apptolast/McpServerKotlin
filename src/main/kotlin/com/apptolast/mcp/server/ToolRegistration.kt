@@ -109,9 +109,11 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             val path = params.getRequiredString("path")
             val content = params.getRequiredString("content")
             val modeStr = params.getOptionalString("mode", "CREATE")
-            val validModes = WriteMode.values()
-            val mode = validModes.find { it.name == modeStr }
-                ?: throw IllegalArgumentException("Invalid write mode: '$modeStr'. Allowed values are: ${validModes.joinToString()}")
+            val mode = try {
+                WriteMode.valueOf(modeStr)
+            } catch (e: IllegalArgumentException) {
+                throw IllegalArgumentException("Invalid write mode: '$modeStr'. Allowed values are: ${WriteMode.values().joinToString { it.name }}")
+            }
             filesystem.writeFile(path, content, mode)
         }
     )
