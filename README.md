@@ -32,6 +32,12 @@ This server implements the MCP protocol to provide AI agents with powerful capab
 - Health and readiness endpoints
 - Metrics support (planned)
 
+✅ **CI/CD Ready**
+- Automated Docker builds with GitHub Actions
+- Docker Hub integration
+- Multi-branch deployment support (main/develop)
+- Kubernetes deployment automation
+
 ## Quick Start
 
 ### Prerequisites
@@ -182,6 +188,24 @@ This project follows Kotlin coding conventions. Format code with:
 
 ## Deployment
 
+### Docker
+
+The project includes automated CI/CD with GitHub Actions:
+
+```bash
+# Automated deployment (triggered on push to main/develop)
+git push origin main
+```
+
+See `.github/QUICKSTART.md` for complete CI/CD documentation.
+
+### Manual Docker Build
+
+```bash
+docker build -t mcp-fullstack-server -f docker/Dockerfile .
+docker run -p 3000:3000 mcp-fullstack-server
+```
+
 ### Kubernetes
 
 Apply the Kubernetes manifests:
@@ -196,6 +220,8 @@ This will create:
 - ConfigMap for configuration
 - Secrets for sensitive data
 - PersistentVolumeClaims for data storage
+
+For automated Kubernetes updates after CI/CD builds, see `.github/workflows/README.md`.
 
 ## License
 
