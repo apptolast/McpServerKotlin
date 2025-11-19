@@ -2,6 +2,8 @@ package com.apptolast.mcp
 
 import com.apptolast.mcp.server.McpServerInstance
 import com.apptolast.mcp.server.ServerConfig
+import com.apptolast.mcp.server.ToolRegistry
+import com.apptolast.mcp.server.registerAllTools
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
