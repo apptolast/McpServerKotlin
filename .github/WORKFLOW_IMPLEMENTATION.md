@@ -38,7 +38,7 @@ Added exclusion for:
 ### Triggers
 - Activates on push to `main` branch
 - Activates on push to `develop` branch
-- Ignores documentation-only changes (*.md, docs/, etc.)
+- Ignores documentation-only changes (*.md, .gitignore, LICENSE, etc.)
 
 ### Docker Image Tagging Strategy
 

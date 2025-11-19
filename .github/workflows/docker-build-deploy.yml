@@ -169,7 +169,7 @@ jobs:
           echo "  -n cyberlab" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Or using tag" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          if [ "${{ github.ref_name }}" = "main" ]; then
             echo "kubectl set image deployment/mcp-fullstack-server \\" >> $GITHUB_STEP_SUMMARY
             echo "  mcp-server=${{ env.IMAGE_NAME }}:latest \\" >> $GITHUB_STEP_SUMMARY
             echo "  -n cyberlab" >> $GITHUB_STEP_SUMMARY
