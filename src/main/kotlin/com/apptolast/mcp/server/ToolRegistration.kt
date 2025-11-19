@@ -16,8 +16,8 @@ import kotlinx.serialization.json.*
  * Helper extension functions to extract parameters from JsonObject
  */
 private fun JsonObject.getRequiredString(key: String): String {
-    return this[key]?.jsonPrimitive?.content
-        ?: throw IllegalArgumentException("Missing required parameter: '$key'")
+    return this[key]?.jsonPrimitive?.contentOrNull
+        ?: throw IllegalArgumentException("Missing or invalid required parameter: '$key'")
 }
 
 private fun JsonObject.getOptionalString(key: String, default: String): String {
@@ -80,7 +80,7 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
         inputSchema = SchemaBuilder.createSchema(
             properties = mapOf(
                 "path" to SchemaBuilder.stringProperty("Absolute or relative path to the file"),
-                "encoding" to SchemaBuilder.stringProperty("File encoding options", listOf("UTF-8", "ISO-8859-1", "US-ASCII"))
+                "encoding" to SchemaBuilder.stringProperty("File encoding (default: UTF-8)", listOf("UTF-8", "ISO-8859-1", "US-ASCII"))
             ),
             required = listOf("path")
         ),
@@ -109,8 +109,9 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             val path = params.getRequiredString("path")
             val content = params.getRequiredString("content")
             val modeStr = params.getOptionalString("mode", "CREATE")
-            val mode = WriteMode.values().find { it.name == modeStr }
-                ?: throw IllegalArgumentException("Invalid write mode: '$modeStr'. Allowed values are: ${WriteMode.values().joinToString()}")
+            val validModes = WriteMode.values()
+            val mode = validModes.find { it.name == modeStr }
+                ?: throw IllegalArgumentException("Invalid write mode: '$modeStr'. Allowed values are: ${validModes.joinToString()}")
             filesystem.writeFile(path, content, mode)
         }
     )

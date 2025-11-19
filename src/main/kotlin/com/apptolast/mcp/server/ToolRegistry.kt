@@ -207,6 +207,7 @@ object SchemaBuilder {
         return buildJsonObject {
             put("type", "object")
             put("description", description)
+            put("properties", JsonObject(emptyMap()))
             put("additionalProperties", valueSchema)
         }
     }

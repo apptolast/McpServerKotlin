@@ -113,8 +113,8 @@ fun Application.configureMcpServer(config: ServerConfig, toolRegistry: ToolRegis
                     if (json is JsonObject) {
                         extractedId = json["id"]
                     }
-                } catch (_: Exception) {
-                    // If we can't parse as JSON, we'll handle it in the catch block below
+                } catch (e: Exception) {
+                    logger.debug(e) { "Failed to pre-parse JSON for id extraction" }
                 }
                 
                 // Now try to deserialize to JsonRpcRequest
