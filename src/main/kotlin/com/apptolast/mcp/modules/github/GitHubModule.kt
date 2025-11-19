@@ -73,21 +73,23 @@ class GitHubModule(
     
     suspend fun commit(
         message: String,
-        files: List<String> = emptyList(),
+        files: List<String>? = emptyList(),
         author: String = "MCP Server",
         email: String = "mcp@apptolast.com"
     ): ToolResult = withContext(Dispatchers.IO) {
         try {
             val git = getOrInitGit()
             
-            // Stage files
-            val addCommand = git.add()
-            if (files.isEmpty()) {
-                addCommand.addFilepattern(".")
-            } else {
-                files.forEach { addCommand.addFilepattern(it) }
+            // Stage files only if files parameter is not null
+            if (files != null) {
+                val addCommand = git.add()
+                if (files.isEmpty()) {
+                    addCommand.addFilepattern(".")
+                } else {
+                    files.forEach { addCommand.addFilepattern(it) }
+                }
+                addCommand.call()
             }
-            addCommand.call()
             
             // Commit
             val commit = git.commit()

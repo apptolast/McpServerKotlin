@@ -69,9 +69,10 @@ suspend fun McpServerInstance.registerGitHubTools() {
             // val email = request.arguments["email"]?.jsonPrimitive?.content
             val addAll = request.arguments["addAll"]?.jsonPrimitive?.content?.toBoolean() ?: false
 
-            // Pass empty list to stage all files (addAll=true) or only staged files (addAll=false)
+            // If addAll is true, stage and commit all changes (empty list means "git add .").
+            // If addAll is false, commit only already staged files (null means no additional files staged).
             // TODO: Implement file selection for granular staging
-            val files = emptyList<String>()  // Empty list means commit all changes (git add .)
+            val files = if (addAll) emptyList<String>() else null
             val result = githubModule.commit(message, files)
 
             if (result.isError) {
