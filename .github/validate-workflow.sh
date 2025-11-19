@@ -37,11 +37,13 @@ fi
 echo ""
 
 # Check 2: Validate YAML syntax
+# Prerequisites: Python 3 with PyYAML library installed
+# Install with: pip3 install pyyaml
 echo "2️⃣  Validating YAML syntax..."
 if python3 -c "import yaml; yaml.safe_load(open('.github/workflows/docker-build-deploy.yml'))" 2>/dev/null; then
     check_status 0 "YAML syntax is valid"
 else
-    check_status 1 "YAML syntax error"
+    check_status 1 "YAML syntax error (requires Python 3 with PyYAML: pip3 install pyyaml)"
 fi
 echo ""
 
