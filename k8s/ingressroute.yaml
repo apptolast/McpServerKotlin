@@ -98,11 +98,11 @@ metadata:
   namespace: cyberlab
 spec:
   rateLimit:
-    # Allow average of 100 requests per second
-    average: 100
+    # Allow average of 20 requests per second (lowered for AI workload protection)
+    average: 20
 
-    # Allow bursts up to 200 requests
-    burst: 200
+    # Allow bursts up to 50 requests
+    burst: 50
 
     # Time period for rate limiting (1 second)
     period: 1s

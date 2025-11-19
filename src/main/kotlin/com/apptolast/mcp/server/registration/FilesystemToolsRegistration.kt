@@ -29,13 +29,13 @@ suspend fun McpServerInstance.registerFilesystemTools() {
         inputSchema = FilesystemSchemas.readFile
     ) { request: CallToolRequest ->
         try {
-            val path = request.arguments?.get("path")?.jsonPrimitive?.content
+            val path = request.arguments["path"]?.jsonPrimitive?.content
                 ?: return@addTool CallToolResult(
                     content = listOf(TextContent(text = "Missing required parameter: path")),
                     isError = true
                 )
 
-            val encoding = request.arguments?.get("encoding")?.jsonPrimitive?.content ?: "UTF-8"
+            val encoding = request.arguments["encoding"]?.jsonPrimitive?.content ?: "UTF-8"
 
             val result = filesystemModule.readFile(path, encoding)
 

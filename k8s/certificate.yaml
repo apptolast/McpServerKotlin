@@ -29,11 +29,3 @@ spec:
   # Add more domains if needed:
   # - api-mcp.apptolast.com
   # - mcp-server.apptolast.com
-
-  # ACME configuration (Let's Encrypt uses ACME protocol)
-  acme:
-    config:
-      - http01:
-          ingress: traefik
-        domains:
-          - mcp.apptolast.com

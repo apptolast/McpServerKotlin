@@ -15,7 +15,7 @@ import io.ktor.server.routing.*
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import io.ktor.utils.io.streams.asInput
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.io.asSink
 import kotlinx.io.buffered
 import kotlinx.serialization.encodeToString
@@ -50,7 +50,7 @@ fun main(args: Array<String>) {
  * In this mode, the server communicates via stdin/stdout using the MCP protocol.
  * This is the recommended mode for local AI clients like Claude Desktop.
  */
-private fun runStdioMode(config: ServerConfig) = runBlocking {
+private fun runStdioMode(config: ServerConfig): Nothing = runBlocking {
     logger.info { "Initializing MCP server for stdio transport..." }
 
     // Create MCP server instance
@@ -74,10 +74,10 @@ private fun runStdioMode(config: ServerConfig) = runBlocking {
     // Connect MCP server to stdio transport
     mcpServer.server.connect(transport)
 
-    // Keep the server running indefinitely
+    // Keep the server running until cancelled (allows graceful shutdown)
     // The stdio transport will handle the connection lifecycle
     logger.info { "MCP server running on stdio. Press Ctrl+C to stop." }
-    Thread.sleep(Long.MAX_VALUE)
+    awaitCancellation()
 }
 
 /**
@@ -104,7 +104,7 @@ fun Application.configureHttpServer(config: ServerConfig) {
         json(Json {
             prettyPrint = true
             ignoreUnknownKeys = true
-            encodeDefaults = true
+            encodeDefaults = false
         })
     }
 
@@ -161,9 +161,6 @@ fun Application.configureHttpServer(config: ServerConfig) {
                     }
                     putJsonObject("prompts") {
                         put("listChanged", false)
-                    }
-                    putJsonObject("logging") {
-                        // Empty object indicates logging support
                     }
                 }
                 putJsonObject("modules") {
