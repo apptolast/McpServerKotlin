@@ -183,13 +183,7 @@ suspend fun handleMcpRequest(request: JsonRpcRequest, toolRegistry: ToolRegistry
 
             val toolParamsElement = params["arguments"]
             val toolParams = when {
-                toolParamsElement == null -> return JsonRpcResponse(
-                    id = request.id,
-                    error = JsonRpcError(
-                        code = -32602,
-                        message = "Invalid params: 'arguments' field required"
-                    )
-                )
+                toolParamsElement == null -> buildJsonObject {} // Default to empty object for backward compatibility
                 toolParamsElement !is JsonObject -> return JsonRpcResponse(
                     id = request.id,
                     error = JsonRpcError(
