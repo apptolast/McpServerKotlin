@@ -2,7 +2,7 @@
 # GitHub Actions Workflow Validation Script
 # This script validates that the workflow is correctly configured
 
-set -e
+set -euo pipefail
 
 echo "🔍 GitHub Actions Workflow Validation"
 echo "======================================"

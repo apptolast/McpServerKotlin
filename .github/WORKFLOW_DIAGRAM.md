@@ -15,7 +15,7 @@
 │  │  Trigger Conditions:                                     │  │
 │  │  - Push to main branch    → Tag: latest, main-<sha>     │  │
 │  │  - Push to develop branch → Tag: develop, develop-<sha> │  │
-│  │  - Ignore: *.md, docs/, LICENSE                         │  │
+│  │  - Ignore: *.md, LICENSE                                │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └────────────────────────────┬────────────────────────────────────┘
                              │
