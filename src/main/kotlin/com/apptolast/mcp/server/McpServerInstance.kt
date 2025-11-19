@@ -113,13 +113,15 @@ class McpServerInstance(private val config: ServerConfig) {
     /**
      * Register prompt templates (optional enhancement)
      *
-     * NOTE: Temporarily disabled due to Role enum uncertainty
+     * NOTE: Temporarily disabled - prompts registration deferred for future implementation
+     * Role.USER enum value exists and is imported (line 15), but full prompts implementation
+     * requires additional validation and testing before enabling in production
      */
     suspend fun registerPrompts() {
-        logger.info { "Prompts registration skipped (Role enum values unknown)" }
+        logger.info { "Prompts registration skipped (deferred for future implementation)" }
         return
 
-        // DISABLED CODE BELOW - Role enum values need verification
+        // DISABLED CODE BELOW - If re-enabled, verify Role.USER is correct for SDK 0.7.7
         /*
         logger.info { "Registering prompts with MCP server..." }
 
