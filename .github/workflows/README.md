@@ -16,7 +16,6 @@ The workflow is triggered on:
 
 The workflow **ignores** changes to:
 - Markdown files (`**.md`)
-- Documentation folder (`docs/**`)
 - `.gitignore` file
 - `LICENSE` file
 

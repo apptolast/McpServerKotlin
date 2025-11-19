@@ -232,8 +232,7 @@ Security Layers
    │    └─ DOCKERHUB_TOKEN (encrypted)
    │
    ├─ Workflow Permissions
-   │    ├─ contents: read
-   │    └─ packages: write
+   │    └─ contents: read
    │
    ├─ Docker Hub Authentication
    │    └─ Token-based (no password)
