@@ -4,6 +4,7 @@ import com.apptolast.mcp.util.ToolDefinition
 import com.apptolast.mcp.util.ToolResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.json.*
+import java.util.concurrent.ConcurrentHashMap
 
 private val logger = KotlinLogging.logger {}
 
@@ -19,7 +20,7 @@ private val logger = KotlinLogging.logger {}
  */
 class ToolRegistry {
 
-    private val tools = mutableMapOf<String, ToolHandler>()
+    private val tools = ConcurrentHashMap<String, ToolHandler>()
 
     /**
      * Registers a new tool in the registry
@@ -97,7 +98,7 @@ class ToolRegistry {
     /**
      * Clears all registered tools (useful for testing)
      */
-    fun clear() {
+    internal fun clear() {
         tools.clear()
         logger.info { "Cleared all registered tools" }
     }
@@ -196,6 +197,18 @@ object SchemaBuilder {
             put("type", "object")
             put("description", description)
             put("properties", JsonObject(properties))
+        }
+    }
+
+    /**
+     * Creates a map/dictionary property schema (object with any string keys)
+     */
+    fun mapProperty(description: String, valueSchema: JsonObject): JsonObject {
+        return buildJsonObject {
+            put("type", "object")
+            put("description", description)
+            put("properties", JsonObject(emptyMap()))
+            put("additionalProperties", valueSchema)
         }
     }
 }
