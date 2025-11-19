@@ -73,7 +73,7 @@ class GitHubModule(
     
     suspend fun commit(
         message: String,
-        files: List<String>? = emptyList(),
+        files: List<String>? = null,
         author: String = "MCP Server",
         email: String = "mcp@apptolast.com"
     ): ToolResult = withContext(Dispatchers.IO) {
