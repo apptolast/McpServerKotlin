@@ -196,8 +196,11 @@ kubectl rollout restart deployment/mcp-fullstack-server -n cyberlab
 
 **Check build status:**
 - Build status badge can be added to README.md:
+  <!--
+    NOTE: Replace <OWNER>/<REPO> with your actual GitHub repository path.
+  -->
   ```markdown
-  ![Docker Build](https://github.com/apptolast/McpServerKotlin/actions/workflows/docker-build-deploy.yml/badge.svg)
+  ![Docker Build](https://github.com/<OWNER>/<REPO>/actions/workflows/docker-build-deploy.yml/badge.svg)
   ```
 
 ### Troubleshooting

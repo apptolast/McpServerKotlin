@@ -98,9 +98,6 @@ jobs:
           # Reference: https://docs.docker.com/build/cache/backends/
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Build arguments (if needed in future)
-          build-args: |
-            VERSION=${{ steps.meta.outputs.version }}
       
       # Step 6: Display build summary
       - name: Image build summary
@@ -151,12 +148,15 @@ jobs:
       # but this workflow pushes to Docker Hub as $DOCKERHUB_USERNAME/mcpserverkotlin
       - name: Kubernetes update summary
         run: |
+          echo "## ⚠️ **CRITICAL ACTION REQUIRED: Image Registry Mismatch** ⚠️" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> :warning: **Your Kubernetes deployment currently uses \`apptolast.com/mcp-fullstack-server:1.0.0\` in \`k8s/deployment.yaml\`.**" >> $GITHUB_STEP_SUMMARY
+          echo "> **This workflow pushes images to Docker Hub as \`${{ env.DOCKERHUB_USERNAME }}/mcpserverkotlin\`.**" >> $GITHUB_STEP_SUMMARY
+          echo "> **You MUST manually update \`k8s/deployment.yaml\` to use the new Docker Hub image, or your deployment will NOT use the latest build.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Kubernetes Deployment Update ☸️" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The Docker image has been successfully pushed to Docker Hub." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> **Note:** If your deployment currently uses a different image registry," >> $GITHUB_STEP_SUMMARY
-          echo "> you may need to update \`k8s/deployment.yaml\` to reference the Docker Hub image." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Update Kubernetes Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
