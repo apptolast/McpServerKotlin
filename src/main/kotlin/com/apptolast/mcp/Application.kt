@@ -104,8 +104,21 @@ fun Application.configureMcpServer(config: ServerConfig, toolRegistry: ToolRegis
 
         // MCP JSON-RPC endpoint
         post("/mcp") {
+            var extractedId: JsonElement? = null
             try {
-                val request = call.receive<JsonRpcRequest>()
+                // Try to extract the id from the raw request body first
+                val rawBody = call.receiveText()
+                try {
+                    val json = Json.parseToJsonElement(rawBody)
+                    if (json is JsonObject) {
+                        extractedId = json["id"]
+                    }
+                } catch (_: Exception) {
+                    // If we can't parse as JSON, we'll handle it in the catch block below
+                }
+                
+                // Now try to deserialize to JsonRpcRequest
+                val request = Json.decodeFromString<JsonRpcRequest>(rawBody)
                 logger.info { "Received JSON-RPC request: method=${request.method}, id=${request.id}" }
 
                 val response = handleMcpRequest(request, toolRegistry)
@@ -113,7 +126,7 @@ fun Application.configureMcpServer(config: ServerConfig, toolRegistry: ToolRegis
             } catch (e: Exception) {
                 logger.error(e) { "Failed to handle MCP request" }
                 val errorResponse = JsonRpcResponse(
-                    id = null,
+                    id = extractedId,
                     error = JsonRpcError(
                         code = -32603,
                         message = "Internal error: ${e.message}"
@@ -144,7 +157,7 @@ suspend fun handleMcpRequest(request: JsonRpcRequest, toolRegistry: ToolRegistry
             val tools = toolRegistry.listTools()
             JsonRpcResponse(
                 id = request.id,
-                result = Json.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(ToolDefinition.serializer()), tools)
+                result = Json.encodeToJsonElement(serializer<List<ToolDefinition>>(), tools)
             )
         }
         "tools/call" -> {
@@ -168,16 +181,40 @@ suspend fun handleMcpRequest(request: JsonRpcRequest, toolRegistry: ToolRegistry
                 )
             }
 
-            val toolParams = params["arguments"]?.jsonObject ?: buildJsonObject {}
+            val toolParamsElement = params["arguments"]
+            val toolParams = when {
+                toolParamsElement == null -> return JsonRpcResponse(
+                    id = request.id,
+                    error = JsonRpcError(
+                        code = -32602,
+                        message = "Invalid params: 'arguments' field required"
+                    )
+                )
+                toolParamsElement !is JsonObject -> return JsonRpcResponse(
+                    id = request.id,
+                    error = JsonRpcError(
+                        code = -32602,
+                        message = "Invalid params: 'arguments' must be an object"
+                    )
+                )
+                else -> toolParamsElement
+            }
 
             val result = toolRegistry.invoke(toolName, toolParams)
 
             if (result.isError) {
+                val message = result.content.firstOrNull()?.let { 
+                    when (it) {
+                        is TextContent -> it.text
+                        else -> "Tool execution failed"
+                    }
+                } ?: "Tool execution failed"
+                
                 JsonRpcResponse(
                     id = request.id,
                     error = JsonRpcError(
                         code = -32000,
-                        message = result.content.firstOrNull()?.let { (it as? TextContent)?.text } ?: "Tool execution failed"
+                        message = message
                     )
                 )
             } else {

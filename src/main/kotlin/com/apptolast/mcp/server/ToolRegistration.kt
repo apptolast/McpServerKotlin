@@ -13,6 +13,26 @@ import com.apptolast.mcp.modules.resources.ResourceModule
 import kotlinx.serialization.json.*
 
 /**
+ * Helper extension functions to extract parameters from JsonObject
+ */
+private fun JsonObject.getRequiredString(key: String): String {
+    return this[key]?.jsonPrimitive?.content
+        ?: throw IllegalArgumentException("Missing required parameter: '$key'")
+}
+
+private fun JsonObject.getOptionalString(key: String, default: String): String {
+    return this[key]?.jsonPrimitive?.contentOrNull ?: default
+}
+
+private fun JsonObject.getOptionalInt(key: String, default: Int): Int {
+    return this[key]?.jsonPrimitive?.intOrNull ?: default
+}
+
+private fun JsonObject.getOptionalBoolean(key: String, default: Boolean): Boolean {
+    return this[key]?.jsonPrimitive?.booleanOrNull ?: default
+}
+
+/**
  * Registers all available tools from all modules into the ToolRegistry.
  *
  * This function is responsible for:
@@ -60,13 +80,13 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
         inputSchema = SchemaBuilder.createSchema(
             properties = mapOf(
                 "path" to SchemaBuilder.stringProperty("Absolute or relative path to the file"),
-                "encoding" to SchemaBuilder.stringProperty("File encoding (default: UTF-8)", listOf("UTF-8", "ISO-8859-1", "US-ASCII"))
+                "encoding" to SchemaBuilder.stringProperty("File encoding options", listOf("UTF-8", "ISO-8859-1", "US-ASCII"))
             ),
             required = listOf("path")
         ),
         handler = { params ->
-            val path = params["path"]?.jsonPrimitive?.content ?: ""
-            val encoding = params["encoding"]?.jsonPrimitive?.contentOrNull ?: "UTF-8"
+            val path = params.getRequiredString("path")
+            val encoding = params.getOptionalString("encoding", "UTF-8")
             filesystem.readFile(path, encoding)
         }
     )
@@ -86,10 +106,11 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             required = listOf("path", "content")
         ),
         handler = { params ->
-            val path = params["path"]?.jsonPrimitive?.content ?: ""
-            val content = params["content"]?.jsonPrimitive?.content ?: ""
-            val modeStr = params["mode"]?.jsonPrimitive?.contentOrNull ?: "CREATE"
-            val mode = WriteMode.valueOf(modeStr)
+            val path = params.getRequiredString("path")
+            val content = params.getRequiredString("content")
+            val modeStr = params.getOptionalString("mode", "CREATE")
+            val mode = WriteMode.values().find { it.name == modeStr }
+                ?: throw IllegalArgumentException("Invalid write mode: '$modeStr'. Allowed values are: ${WriteMode.values().joinToString()}")
             filesystem.writeFile(path, content, mode)
         }
     )
@@ -106,9 +127,9 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             required = listOf("path")
         ),
         handler = { params ->
-            val path = params["path"]?.jsonPrimitive?.content ?: ""
-            val recursive = params["recursive"]?.jsonPrimitive?.booleanOrNull ?: false
-            val maxDepth = params["maxDepth"]?.jsonPrimitive?.intOrNull ?: 2
+            val path = params.getRequiredString("path")
+            val recursive = params.getOptionalBoolean("recursive", false)
+            val maxDepth = params.getOptionalInt("maxDepth", 2)
             filesystem.listDirectory(path, recursive, maxDepth)
         }
     )
@@ -124,8 +145,8 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             required = listOf("path")
         ),
         handler = { params ->
-            val path = params["path"]?.jsonPrimitive?.content ?: ""
-            val recursive = params["recursive"]?.jsonPrimitive?.booleanOrNull ?: true
+            val path = params.getRequiredString("path")
+            val recursive = params.getOptionalBoolean("recursive", true)
             filesystem.createDirectory(path, recursive)
         }
     )
@@ -141,8 +162,8 @@ private fun registerFilesystemTools(registry: ToolRegistry, filesystem: Filesyst
             required = listOf("path")
         ),
         handler = { params ->
-            val path = params["path"]?.jsonPrimitive?.content ?: ""
-            val recursive = params["recursive"]?.jsonPrimitive?.booleanOrNull ?: false
+            val path = params.getRequiredString("path")
+            val recursive = params.getOptionalBoolean("recursive", false)
             filesystem.deleteFile(path, recursive)
         }
     )
@@ -160,15 +181,15 @@ private fun registerBashTools(registry: ToolRegistry, bash: BashExecutor) {
                     "Command arguments (optional)",
                     SchemaBuilder.stringProperty("Argument")
                 ),
-                "env" to SchemaBuilder.objectProperty(
+                "env" to SchemaBuilder.mapProperty(
                     "Environment variables to set (optional)",
-                    emptyMap()
+                    SchemaBuilder.stringProperty("Environment variable value")
                 )
             ),
             required = listOf("command")
         ),
         handler = { params ->
-            val command = params["command"]?.jsonPrimitive?.content ?: ""
+            val command = params.getRequiredString("command")
             val args = params["args"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
             val env = params["env"]?.jsonObject?.mapValues { it.value.jsonPrimitive.content } ?: emptyMap()
             bash.execute(command, args, env)
@@ -200,16 +221,16 @@ private fun registerGitHubTools(registry: ToolRegistry, github: GitHubModule) {
                     "Files to stage (empty = stage all)",
                     SchemaBuilder.stringProperty("File path")
                 ),
-                "author" to SchemaBuilder.stringProperty("Author name (optional)", null),
-                "email" to SchemaBuilder.stringProperty("Author email (optional)", null)
+                "author" to SchemaBuilder.stringProperty("Author name (default: MCP Server)"),
+                "email" to SchemaBuilder.stringProperty("Author email (default: mcp@apptolast.com)")
             ),
             required = listOf("message")
         ),
         handler = { params ->
-            val message = params["message"]?.jsonPrimitive?.content ?: ""
+            val message = params.getRequiredString("message")
             val files = params["files"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-            val author = params["author"]?.jsonPrimitive?.contentOrNull ?: "MCP Server"
-            val email = params["email"]?.jsonPrimitive?.contentOrNull ?: "mcp@apptolast.com"
+            val author = params.getOptionalString("author", "MCP Server")
+            val email = params.getOptionalString("email", "mcp@apptolast.com")
             github.commit(message, files, author, email)
         }
     )
@@ -219,14 +240,14 @@ private fun registerGitHubTools(registry: ToolRegistry, github: GitHubModule) {
         description = "Push commits to a remote Git repository",
         inputSchema = SchemaBuilder.createSchema(
             properties = mapOf(
-                "remote" to SchemaBuilder.stringProperty("Remote name (default: origin)", null),
-                "branch" to SchemaBuilder.stringProperty("Branch to push (default: current branch)", null)
+                "remote" to SchemaBuilder.stringProperty("Remote name (default: origin)"),
+                "branch" to SchemaBuilder.stringProperty("Branch to push (default: current branch)")
             ),
             required = emptyList()
         ),
         handler = { params ->
-            val remote = params["remote"]?.jsonPrimitive?.contentOrNull ?: "origin"
-            val branch = params["branch"]?.jsonPrimitive?.contentOrNull ?: ""
+            val remote = params.getOptionalString("remote", "origin")
+            val branch = params.getOptionalString("branch", "")
             github.push(remote, branch)
         }
     )
@@ -237,12 +258,12 @@ private fun registerGitHubTools(registry: ToolRegistry, github: GitHubModule) {
         inputSchema = SchemaBuilder.createSchema(
             properties = mapOf(
                 "url" to SchemaBuilder.stringProperty("Git repository URL"),
-                "branch" to SchemaBuilder.stringProperty("Branch to clone (optional)", null)
+                "branch" to SchemaBuilder.stringProperty("Branch to clone (optional)")
             ),
             required = listOf("url")
         ),
         handler = { params ->
-            val url = params["url"]?.jsonPrimitive?.content ?: ""
+            val url = params.getRequiredString("url")
             val branch = params["branch"]?.jsonPrimitive?.contentOrNull
             github.clone(url, branch)
         }
@@ -258,7 +279,7 @@ private fun registerGitHubTools(registry: ToolRegistry, github: GitHubModule) {
             required = emptyList()
         ),
         handler = { params ->
-            val maxCount = params["maxCount"]?.jsonPrimitive?.intOrNull ?: 10
+            val maxCount = params.getOptionalInt("maxCount", 10)
             github.log(maxCount)
         }
     )
@@ -268,14 +289,14 @@ private fun registerGitHubTools(registry: ToolRegistry, github: GitHubModule) {
         description = "List or checkout Git branches",
         inputSchema = SchemaBuilder.createSchema(
             properties = mapOf(
-                "name" to SchemaBuilder.stringProperty("Branch name (null to list all branches)", null),
+                "name" to SchemaBuilder.stringProperty("Branch name (null to list all branches)"),
                 "checkout" to SchemaBuilder.booleanProperty("Checkout the branch if true (default: false)", false)
             ),
             required = emptyList()
         ),
         handler = { params ->
             val name = params["name"]?.jsonPrimitive?.contentOrNull
-            val checkout = params["checkout"]?.jsonPrimitive?.booleanOrNull ?: false
+            val checkout = params.getOptionalBoolean("checkout", false)
             github.branch(name, checkout)
         }
     )
@@ -362,7 +383,7 @@ private fun registerMemoryTools(registry: ToolRegistry, memory: MemoryModule) {
             required = listOf("query")
         ),
         handler = { params ->
-            val query = params["query"]?.jsonPrimitive?.content ?: ""
+            val query = params.getRequiredString("query")
             memory.searchNodes(query)
         }
     )
@@ -403,9 +424,9 @@ private fun registerPostgreSQLTools(registry: ToolRegistry, postgres: PostgreSQL
             required = listOf("sql")
         ),
         handler = { params ->
-            val sql = params["sql"]?.jsonPrimitive?.content ?: ""
+            val sql = params.getRequiredString("sql")
             val paramsList = params["params"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList()
-            val maxRows = params["maxRows"]?.jsonPrimitive?.intOrNull ?: 1000
+            val maxRows = params.getOptionalInt("maxRows", 1000)
             postgres.executeQuery(sql, paramsList, maxRows)
         }
     )
@@ -449,9 +470,9 @@ private fun registerMongoDBTools(registry: ToolRegistry, mongo: MongoDBModule) {
             required = listOf("collection")
         ),
         handler = { params ->
-            val collection = params["collection"]?.jsonPrimitive?.content ?: ""
-            val filter = params["filter"]?.jsonPrimitive?.contentOrNull ?: "{}"
-            val limit = params["limit"]?.jsonPrimitive?.intOrNull ?: 100
+            val collection = params.getRequiredString("collection")
+            val filter = params.getOptionalString("filter", "{}")
+            val limit = params.getOptionalInt("limit", 100)
             mongo.find(collection, filter, limit)
         }
     )
@@ -479,8 +500,8 @@ private fun registerMongoDBTools(registry: ToolRegistry, mongo: MongoDBModule) {
             required = listOf("collection")
         ),
         handler = { params ->
-            val collection = params["collection"]?.jsonPrimitive?.content ?: ""
-            val filter = params["filter"]?.jsonPrimitive?.contentOrNull ?: "{}"
+            val collection = params.getRequiredString("collection")
+            val filter = params.getOptionalString("filter", "{}")
             mongo.countDocuments(collection, filter)
         }
     )
@@ -496,8 +517,8 @@ private fun registerMongoDBTools(registry: ToolRegistry, mongo: MongoDBModule) {
             required = listOf("collection", "pipeline")
         ),
         handler = { params ->
-            val collection = params["collection"]?.jsonPrimitive?.content ?: ""
-            val pipeline = params["pipeline"]?.jsonPrimitive?.content ?: "[]"
+            val collection = params.getRequiredString("collection")
+            val pipeline = params.getRequiredString("pipeline")
             mongo.aggregate(collection, pipeline)
         }
     )
@@ -539,7 +560,7 @@ private fun registerResourceTools(registry: ToolRegistry, resources: ResourceMod
             required = listOf("uri")
         ),
         handler = { params ->
-            val uri = params["uri"]?.jsonPrimitive?.content ?: ""
+            val uri = params.getRequiredString("uri")
             resources.readResource(uri)
         }
     )
@@ -556,9 +577,9 @@ private fun registerResourceTools(registry: ToolRegistry, resources: ResourceMod
             required = listOf("name", "content")
         ),
         handler = { params ->
-            val name = params["name"]?.jsonPrimitive?.content ?: ""
-            val content = params["content"]?.jsonPrimitive?.content ?: ""
-            val mimeType = params["mimeType"]?.jsonPrimitive?.contentOrNull ?: "text/plain"
+            val name = params.getRequiredString("name")
+            val content = params.getRequiredString("content")
+            val mimeType = params.getOptionalString("mimeType", "text/plain")
             resources.createResource(name, content, mimeType)
         }
     )
@@ -573,7 +594,7 @@ private fun registerResourceTools(registry: ToolRegistry, resources: ResourceMod
             required = listOf("uri")
         ),
         handler = { params ->
-            val uri = params["uri"]?.jsonPrimitive?.content ?: ""
+            val uri = params.getRequiredString("uri")
             resources.deleteResource(uri)
         }
     )
