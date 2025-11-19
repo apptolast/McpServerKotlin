@@ -56,6 +56,11 @@ This job provides instructions and mechanisms to update Kubernetes deployments.
 
 **Kubernetes Update Methods:**
 
+> **Important Note:** The workflow pushes Docker images to Docker Hub as `<DOCKERHUB_USERNAME>/mcpserverkotlin`. 
+> If your deployment currently references a different registry (e.g., `apptolast.com/mcp-fullstack-server`), 
+> you'll need to update `k8s/deployment.yaml` to use the Docker Hub image format. 
+> Replace `<username>` in the commands below with your Docker Hub username from the secrets.
+
 **Method 1: Using Image Digest (Recommended)**
 ```bash
 kubectl set image deployment/mcp-fullstack-server \

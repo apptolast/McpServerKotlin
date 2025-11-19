@@ -10,7 +10,6 @@ on:
     # Ignore changes to documentation and non-code files
     paths-ignore:
       - '**.md'
-      - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
 
@@ -25,7 +24,6 @@ env:
 # Reference: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
 permissions:
   contents: read
-  packages: write
 
 jobs:
   # Job to build and push Docker image to Docker Hub
@@ -149,11 +147,16 @@ jobs:
       
       # Step 3: Display Kubernetes update instructions
       # This provides manual update commands since we don't have k8s credentials
+      # Note: The current k8s deployment uses apptolast.com/mcp-fullstack-server
+      # but this workflow pushes to Docker Hub as $DOCKERHUB_USERNAME/mcpserverkotlin
       - name: Kubernetes update summary
         run: |
-          echo "## Kubernetes Deployment Update :kubernetes:" >> $GITHUB_STEP_SUMMARY
+          echo "## Kubernetes Deployment Update ☸️" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The Docker image has been successfully pushed to Docker Hub." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Note:** If your deployment currently uses a different image registry," >> $GITHUB_STEP_SUMMARY
+          echo "> you may need to update \`k8s/deployment.yaml\` to reference the Docker Hub image." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Update Kubernetes Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -190,7 +193,6 @@ jobs:
       
       # Step 4: Trigger webhook (optional, for future use)
       # This step is commented out but can be enabled when webhook is configured
-      # Reference: https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
       # - name: Trigger deployment webhook
       #   if: env.WEBHOOK_URL != ''
       #   env:
