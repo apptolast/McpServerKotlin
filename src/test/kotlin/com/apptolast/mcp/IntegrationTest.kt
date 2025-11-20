@@ -223,11 +223,12 @@ class IntegrationTest {
         assertFalse(searchResult.isError, "Failed to search knowledge graph")
         val searchText = searchResult.content.first().toString()
         assertTrue(searchText.contains("TestProject"), "Expected TestProject in search results")
-        assertTrue(searchText.contains("README.md") || searchText.contains("Main.kt"), "Expected related entities in search results")
 
         val openNodesResult = memoryModule.openNodes(listOf("TestProject"))
         assertFalse(openNodesResult.isError, "Failed to open nodes")
-        assertTrue(openNodesResult.content.first().toString().contains("Created during integration test"))
+        val openNodeText = openNodesResult.content.first().toString()
+        assertTrue(openNodeText.contains("Created during integration test"))
+        assertTrue(openNodeText.contains("README.md") || openNodeText.contains("Main.kt"), "Expected related entities in open node content")
 
         // ==================== PHASE 7: VERIFY FILE READING ====================
         println("=== PHASE 7: Verifying file reading ===")

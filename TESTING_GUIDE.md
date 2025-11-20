@@ -19,7 +19,8 @@ src/test/kotlin/com/apptolast/mcp/
 └── IntegrationTest.kt               (3 tests, 2 disabled)
 ```
 
-**Total**: 57 tests (53 active, 4 temporarily disabled)
+**Total**: 57 tests (53 active, 4 temporarily disabled)  
+**Pass rate**: 100% of active tests passing (53/53), with 4 tests temporarily disabled
 
 ## Running Tests
 
@@ -253,7 +254,7 @@ See `.github/workflows/docker-build-deploy.yml` for CI configuration.
 ## Test Coverage Goals
 
 - **Target**: >90% code coverage
-- **Current**: 93% (53/57 tests passing)
+- **Current**: 100% of active tests passing (53/53), with 4 tests temporarily disabled
 - **Coverage by Module**:
   - Filesystem: 100%
   - Bash: 100%
@@ -261,7 +262,7 @@ See `.github/workflows/docker-build-deploy.yml` for CI configuration.
   - Resources: 100%
   - PostgreSQL: 100%
   - MongoDB: 100%
-  - Memory: 86% (2 tests disabled)
+  - Memory: 71% (2 tests disabled due to JSONL serialization issue)
 
 ## Best Practices
 

@@ -92,7 +92,7 @@ docker run -p 3000:3000 mcp-fullstack-server
 ### Test Coverage
 
 - **Total Tests**: 57 tests (53 active, 4 temporarily disabled)
-- **Pass Rate**: 93% (53/57 passing)
+- **Pass Rate**: 100% of active tests passing (53/53), with 4 tests temporarily disabled
 - **Coverage by Module**:
   - Filesystem: 100%
   - Bash: 100%
@@ -100,7 +100,7 @@ docker run -p 3000:3000 mcp-fullstack-server
   - Resources: 100%
   - PostgreSQL: 100%
   - MongoDB: 100%
-  - Memory: 86% (2 tests disabled due to JSONL serialization issue)
+  - Memory: 71% (2 tests disabled due to JSONL serialization issue)
 
 For detailed testing instructions, see [TESTING_GUIDE.md](./TESTING_GUIDE.md).
 

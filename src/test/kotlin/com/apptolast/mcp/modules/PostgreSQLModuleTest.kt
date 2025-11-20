@@ -128,11 +128,12 @@ class PostgreSQLModuleTest {
         // Either succeeds (if DB exists) or fails gracefully with error
         val text = result.content.first().toString()
         assertTrue(
+            result.isError ||
             text.contains("Query executed successfully") ||
             text.contains("Query failed") ||
             text.contains("refused") ||
-            text.contains("failed") ||
-            result.isError
+            text.contains("failed"),
+            "Expected either error flag or error message, got: $text"
         )
     }
 
@@ -142,12 +143,18 @@ class PostgreSQLModuleTest {
 
         // Should either succeed or fail gracefully
         val text = result.content.first().toString()
-        assertTrue(
-            text.contains("Database Schema") ||
-            text.contains("Schema retrieval failed") ||
-            text.contains("failed") ||
-            result.isError
-        )
+        if (result.isError) {
+            assertTrue(
+                text.contains("Schema retrieval failed") ||
+                text.contains("failed"),
+                "Error should be handled gracefully, got: $text"
+            )
+        } else {
+            assertTrue(
+                text.contains("Database Schema"),
+                "Should return schema information on success, got: $text"
+            )
+        }
     }
 
     @Test
