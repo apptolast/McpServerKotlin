@@ -120,8 +120,9 @@ suspend fun McpServerInstance.registerFilesystemTools() {
                 )
 
             val recursive = request.arguments["recursive"]?.jsonPrimitive?.content?.toBoolean() ?: false
+            val maxDepth = request.arguments["maxDepth"]?.jsonPrimitive?.content?.toIntOrNull() ?: 2
 
-            val result = filesystemModule.listDirectory(path, recursive)
+            val result = filesystemModule.listDirectory(path, recursive, maxDepth)
 
             if (result.isError) {
                 CallToolResult(
@@ -156,7 +157,9 @@ suspend fun McpServerInstance.registerFilesystemTools() {
                     isError = true
                 )
 
-            val result = filesystemModule.createDirectory(path)
+            val recursive = request.arguments["recursive"]?.jsonPrimitive?.content?.toBoolean() ?: true
+
+            val result = filesystemModule.createDirectory(path, recursive)
 
             if (result.isError) {
                 CallToolResult(
@@ -191,7 +194,9 @@ suspend fun McpServerInstance.registerFilesystemTools() {
                     isError = true
                 )
 
-            val result = filesystemModule.deleteFile(path)
+            val recursive = request.arguments["recursive"]?.jsonPrimitive?.content?.toBoolean() ?: false
+
+            val result = filesystemModule.deleteFile(path, recursive)
 
             if (result.isError) {
                 CallToolResult(

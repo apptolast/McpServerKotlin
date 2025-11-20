@@ -82,16 +82,12 @@ suspend fun McpServerInstance.registerDatabaseTools() {
             Get PostgreSQL database schema information.
 
             Returns table names, column names, data types, and constraints.
-            Optionally specify a table name to get schema for just that table.
 
             Useful for understanding the database structure before writing queries.
         """.trimIndent(),
         inputSchema = DatabaseSchemas.postgresGetSchema
     ) { request: CallToolRequest ->
         try {
-            // Note: getSchema() returns all tables; tableName parameter not supported
-            // val tableName = request.arguments["tableName"]?.jsonPrimitive?.content
-
             val result = postgresModule.getSchema()
 
             if (result.isError) {
