@@ -1,0 +1,31 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mcp-server-tls
+  namespace: cyberlab
+spec:
+  # Secret where the certificate will be stored
+  secretName: mcp-server-tls-secret
+
+  # Duration of the certificate (90 days)
+  duration: 2160h # 90 days
+
+  # Renew certificate 15 days before expiration
+  renewBefore: 360h # 15 days
+
+  # Reference to the ClusterIssuer
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+
+  # Common name for the certificate
+  commonName: mcp.apptolast.com
+
+  # DNS names for the certificate
+  dnsNames:
+    - mcp.apptolast.com
+
+  # Subject Alternative Names (SANs)
+  # Add more domains if needed:
+  # - api-mcp.apptolast.com
+  # - mcp-server.apptolast.com

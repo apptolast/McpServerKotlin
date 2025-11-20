@@ -12,13 +12,19 @@ repositories {
 }
 
 dependencies {
-    // MCP Protocol - implementing ourselves for now
-    
+    // MCP SDK - Official implementation from modelcontextprotocol.io (Latest stable)
+    implementation("io.modelcontextprotocol:kotlin-sdk:0.7.7")
+
     // Ktor Server
     implementation("io.ktor:ktor-server-core:3.0.1")
     implementation("io.ktor:ktor-server-netty:3.0.1")
     implementation("io.ktor:ktor-server-content-negotiation:3.0.1")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
+    implementation("io.ktor:ktor-server-sse:3.0.1")
+
+    // Ktor Client (required by MCP SDK)
+    implementation("io.ktor:ktor-client-core:3.0.1")
+    implementation("io.ktor:ktor-client-cio:3.0.1")
     
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
@@ -26,7 +32,10 @@ dependencies {
     // Serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-    
+
+    // I/O for StdioServerTransport
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.3.0")
+
     // Database Drivers
     implementation("org.postgresql:postgresql:42.7.3")
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:5.2.0")

@@ -78,3 +78,6 @@ temp/
 *.bak
 *.swp
 *~.nib
+
+# GitHub Actions deployment signals
+.deployment/
