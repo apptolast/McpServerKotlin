@@ -37,10 +37,6 @@ object BashSchemas {
                 }
                 put("description", "Environment variables for the command (optional)")
             }
-            putJsonObject("workingDir") {
-                put("type", "string")
-                put("description", "Working directory for command execution (optional, uses configured default)")
-            }
         },
         required = listOf("command")
     )

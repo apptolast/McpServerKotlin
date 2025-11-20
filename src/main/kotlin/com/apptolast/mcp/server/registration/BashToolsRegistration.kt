@@ -45,9 +45,6 @@ suspend fun McpServerInstance.registerBashTools() {
             val envObject = request.arguments["env"]?.jsonObject
             val env = envObject?.mapValues { it.value.jsonPrimitive.content } ?: emptyMap()
 
-            // Note: workingDir is configured at module level, not per-command
-            // val workingDir = request.arguments["workingDir"]?.jsonPrimitive?.content
-
             val result = bashExecutor.execute(command, args, env)
 
             if (result.isError) {

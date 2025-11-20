@@ -40,14 +40,6 @@ object GitHubSchemas {
                 put("type", "string")
                 put("description", "Commit message")
             }
-            putJsonObject("author") {
-                put("type", "string")
-                put("description", "Author name (optional, uses git config)")
-            }
-            putJsonObject("email") {
-                put("type", "string")
-                put("description", "Author email (optional, uses git config)")
-            }
             putJsonObject("addAll") {
                 put("type", "boolean")
                 put("description", "Stage all changes before committing")
@@ -95,10 +87,6 @@ object GitHubSchemas {
                 put("type", "string")
                 put("description", "Target directory path (optional)")
             }
-            putJsonObject("branch") {
-                put("type", "string")
-                put("description", "Specific branch to clone (optional)")
-            }
         },
         required = listOf("url")
     )
@@ -115,10 +103,6 @@ object GitHubSchemas {
                 put("default", 10)
                 put("minimum", 1)
                 put("maximum", 100)
-            }
-            putJsonObject("branch") {
-                put("type", "string")
-                put("description", "Branch name (optional, uses current branch)")
             }
         },
         required = listOf()  // All parameters are optional

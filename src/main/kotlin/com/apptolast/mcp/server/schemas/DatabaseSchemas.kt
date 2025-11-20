@@ -55,12 +55,7 @@ object DatabaseSchemas {
      * Retrieves database schema information (tables, columns, types)
      */
     val postgresGetSchema = Tool.Input(
-        properties = buildJsonObject {
-            putJsonObject("tableName") {
-                put("type", "string")
-                put("description", "Specific table name (optional, omit to get all tables)")
-            }
-        },
+        properties = buildJsonObject {},  // No properties
         required = listOf()  // No required parameters
     )
 

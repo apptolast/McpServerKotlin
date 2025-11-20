@@ -58,11 +58,6 @@ object FilesystemSchemas {
                 }
                 put("default", "OVERWRITE")
             }
-            putJsonObject("encoding") {
-                put("type", "string")
-                put("description", "Character encoding")
-                put("default", "UTF-8")
-            }
         },
         required = listOf("path", "content")
     )
@@ -82,6 +77,13 @@ object FilesystemSchemas {
                 put("description", "Whether to list subdirectories recursively")
                 put("default", false)
             }
+            putJsonObject("maxDepth") {
+                put("type", "integer")
+                put("description", "Maximum depth for recursive listing (only applies when recursive=true)")
+                put("default", 2)
+                put("minimum", 1)
+                put("maximum", 10)
+            }
         },
         required = listOf("path")
     )
@@ -96,6 +98,11 @@ object FilesystemSchemas {
                 put("type", "string")
                 put("description", "Path to the directory to create")
             }
+            putJsonObject("recursive") {
+                put("type", "boolean")
+                put("description", "Create parent directories if they don't exist")
+                put("default", true)
+            }
         },
         required = listOf("path")
     )
@@ -109,6 +116,11 @@ object FilesystemSchemas {
             putJsonObject("path") {
                 put("type", "string")
                 put("description", "Path to the file or directory to delete")
+            }
+            putJsonObject("recursive") {
+                put("type", "boolean")
+                put("description", "Recursively delete directory contents (use with caution!)")
+                put("default", false)
             }
         },
         required = listOf("path")
