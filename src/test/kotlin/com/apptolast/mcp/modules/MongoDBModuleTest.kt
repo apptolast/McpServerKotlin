@@ -117,7 +117,7 @@ class MongoDBModuleTest {
         // Valid pipeline structure but may fail on connection
         val result = mongoModule.aggregate(
             collection = "test_collection",
-            pipeline = """[{"${'$'}match": {}}]"""
+            pipeline = """{"pipeline": [{"${'$'}match": {}}]}"""
         )
 
         // Either succeeds or fails gracefully

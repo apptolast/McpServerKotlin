@@ -370,7 +370,7 @@ Run aggregation pipeline.
   "name": "aggregate",
   "arguments": {
     "collection": "orders",
-    "pipeline": "[{\"$group\": {\"_id\": \"$status\", \"count\": {\"$sum\": 1}}}]"
+    "pipeline": "{\"pipeline\": [{\"$group\": {\"_id\": \"$status\", \"count\": {\"$sum\": 1}}}]}"
   }
 }
 ```
