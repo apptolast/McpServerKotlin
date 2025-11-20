@@ -198,6 +198,8 @@ fun Application.configureHttpServer(config: ServerConfig) {
             try {
                 // Note: MCP SDK doesn't expose a public API to list registered tools dynamically
                 // This endpoint provides static information about available tools
+                // Note: This list must be manually updated when tools are added/removed
+                // See tool registration in McpServerInstance.kt
                 call.respond(
                     mapOf(
                         "total_tools" to 28,
