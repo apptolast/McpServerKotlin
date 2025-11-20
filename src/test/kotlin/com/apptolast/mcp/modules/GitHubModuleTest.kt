@@ -36,7 +36,7 @@ class GitHubModuleTest {
         if (!KEEP_FILES_FOR_INSPECTION) {
             tempDir.deleteRecursively()
         } else {
-            println("⚠️ Archivos NO borrados. Recuerda limpiar: $tempDir")
+            println("⚠️ Files NOT deleted. Remember to clean: $tempDir")
         }
     }
 

@@ -88,7 +88,7 @@ class IntegrationTest {
         if (!KEEP_FILES_FOR_INSPECTION) {
             tempDir.deleteRecursively()
         } else {
-            println("⚠️ Archivos NO borrados. Recuerda limpiar: $tempDir")
+            println("⚠️ Files NOT deleted. Remember to clean: $tempDir")
         }
     }
 
@@ -222,8 +222,8 @@ class IntegrationTest {
         val searchResult = memoryModule.searchNodes("TestProject")
         assertFalse(searchResult.isError, "Failed to search knowledge graph")
         val searchText = searchResult.content.first().toString()
-        assertTrue(searchText.contains("TestProject"))
-        assertTrue(searchText.contains("README.md") || searchText.contains("Main.kt"))
+        assertTrue(searchText.contains("TestProject"), "Expected TestProject in search results")
+        assertTrue(searchText.contains("README.md") || searchText.contains("Main.kt"), "Expected related entities in search results")
 
         val openNodesResult = memoryModule.openNodes(listOf("TestProject"))
         assertFalse(openNodesResult.isError, "Failed to open nodes")

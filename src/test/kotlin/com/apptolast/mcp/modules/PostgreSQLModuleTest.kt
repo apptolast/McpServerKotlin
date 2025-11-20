@@ -5,6 +5,7 @@ import com.apptolast.mcp.server.PostgreSQLConfig
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -161,8 +162,8 @@ class PostgreSQLModuleTest {
 
         // Should NOT contain the read-only validation error message
         if (result.isError) {
-            assertTrue(
-                !text.contains("Only SELECT queries are allowed"),
+            assertFalse(
+                text.contains("Only SELECT queries are allowed"),
                 "SELECT query should pass validation even if connection fails"
             )
         }

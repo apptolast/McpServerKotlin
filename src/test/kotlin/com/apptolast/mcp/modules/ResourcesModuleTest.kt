@@ -33,7 +33,7 @@ class ResourcesModuleTest {
         if (!KEEP_FILES_FOR_INSPECTION) {
             tempDir.deleteRecursively()
         } else {
-            println("⚠️ Archivos NO borrados. Recuerda limpiar: $tempDir")
+            println("⚠️ Files NOT deleted. Remember to clean: $tempDir")
         }
     }
 
@@ -58,7 +58,8 @@ class ResourcesModuleTest {
 
         assertFalse(result.isError)
         val text = result.content.first().toString()
-        assertTrue(text.contains("Resources (2)") || text.contains("test1.txt") || text.contains("test2.json"))
+        assertTrue(text.contains("Resources (2)"), "Expected 2 resources in listing")
+        assertTrue(text.contains("test1.txt") && text.contains("test2.json"), "Expected both files in listing")
     }
 
     @Test
@@ -170,8 +171,9 @@ class ResourcesModuleTest {
 
         assertFalse(result.isError)
         val text = result.content.first().toString()
-        assertTrue(text.contains("URI:"))
-        assertTrue(text.contains("Name:") || text.contains("metadata-test.txt"))
-        assertTrue(text.contains("Type:") || text.contains("Size:"))
+        assertTrue(text.contains("Name:"), "Expected 'Name:' in metadata")
+        assertTrue(text.contains("metadata-test.txt"), "Expected filename in metadata")
+        assertTrue(text.contains("Type:"), "Expected 'Type:' in metadata")
+        assertTrue(text.contains("Size:"), "Expected 'Size:' in metadata")
     }
 }
