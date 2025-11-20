@@ -1,6 +1,10 @@
 #!/bin/bash
 # GitHub Actions Workflow Validation Script
 # This script validates that the workflow is correctly configured
+#
+# Note: If you cannot execute this script directly, run:
+#   chmod +x .github/validate-workflow.sh
+# to make it executable.
 
 set -euo pipefail
 
