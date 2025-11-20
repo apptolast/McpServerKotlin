@@ -64,12 +64,14 @@ suspend fun McpServerInstance.registerGitHubTools() {
                     isError = true
                 )
 
+            val author = request.arguments["author"]?.jsonPrimitive?.content ?: "MCP Server"
+            val email = request.arguments["email"]?.jsonPrimitive?.content ?: "mcp@apptolast.com"
             val addAll = request.arguments["addAll"]?.jsonPrimitive?.content?.toBoolean() ?: false
 
             // If addAll is true, stage and commit all changes (empty list means "git add .").
             // If addAll is false, commit only already staged files (null means no additional files staged).
             val files = if (addAll) emptyList<String>() else null
-            val result = githubModule.commit(message, files)
+            val result = githubModule.commit(message, files, author, email)
 
             if (result.isError) {
                 CallToolResult(

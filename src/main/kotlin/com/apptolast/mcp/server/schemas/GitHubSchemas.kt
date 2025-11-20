@@ -40,6 +40,16 @@ object GitHubSchemas {
                 put("type", "string")
                 put("description", "Commit message")
             }
+            putJsonObject("author") {
+                put("type", "string")
+                put("description", "Author name (optional, defaults to 'MCP Server')")
+                put("default", "MCP Server")
+            }
+            putJsonObject("email") {
+                put("type", "string")
+                put("description", "Author email (optional, defaults to 'mcp@apptolast.com')")
+                put("default", "mcp@apptolast.com")
+            }
             putJsonObject("addAll") {
                 put("type", "boolean")
                 put("description", "Stage all changes before committing")
