@@ -20,7 +20,7 @@ src/test/kotlin/com/apptolast/mcp/
 ```
 
 **Total**: 57 tests (53 active, 4 temporarily disabled)  
-**Pass rate**: 100% of active tests (53/53 passing); 4 tests temporarily disabled out of 57 total.
+**Pass rate**: 100% of active tests (53/53 passing); 4 tests temporarily disabled
 
 ## Running Tests
 
@@ -313,4 +313,4 @@ See `.github/workflows/docker-build-deploy.yml` for CI configuration.
 
 **Last Updated**: 2025-11-21
 **Test Count**: 57 tests (53 active)
-**Pass Rate**: 100% of active tests (53/53), with 4 tests temporarily disabled
+**Pass Rate**: 100% of active tests (53/53 passing); 4 tests temporarily disabled

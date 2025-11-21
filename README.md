@@ -92,7 +92,7 @@ docker run -p 3000:3000 mcp-fullstack-server
 ### Test Coverage
 
 - **Total Tests**: 57 tests (53 active, 4 temporarily disabled)
-- **Pass Rate**: 100% of active tests (53/53 passing), 4 tests temporarily disabled
+- **Pass Rate**: 100% of active tests (53/53 passing); 4 tests temporarily disabled
 - **Coverage by Module**:
   - Filesystem: 100%
   - Bash: 100%
