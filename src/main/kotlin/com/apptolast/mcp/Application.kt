@@ -198,8 +198,11 @@ fun Application.configureHttpServer(config: ServerConfig) {
             try {
                 // Note: MCP SDK doesn't expose a public API to list registered tools dynamically
                 // This endpoint provides static information about available tools
-                // TODO: Keep this static list in sync with actual tool registrations in McpServerInstance.kt.
-                //       Update this list whenever tools are added or removed in McpServerInstance.kt.
+                // TODO: To prevent drift, consider one of these approaches:
+                //       1. Generate this list from McpServerInstance.kt documentation comment (lines 23-30)
+                //       2. Create a shared constant in ServerConfig that both places reference
+                //       3. Add a unit test that fails if tool counts don't match between files
+                //       Current registration: McpServerInstance.registerAllTools() (line 76)
                 call.respond(
                     mapOf(
                         "total_tools" to 28,

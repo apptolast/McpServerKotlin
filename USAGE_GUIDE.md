@@ -301,7 +301,17 @@ Execute read-only SQL queries.
 
 **Note**: Parameter placeholders (`?`) are not supported by this tool. Use direct value interpolation in the SQL string.
 
-**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. Always validate and sanitize user inputs before constructing SQL queries. Never interpolate untrusted user input directly into SQL strings.
+**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. **Never interpolate untrusted user input directly into SQL strings.**
+
+**How to Safely Handle User Input:**
+
+- **Validate input:** If you must interpolate values, use strict validation and whitelisting. Only allow expected values (e.g., numbers, specific column names, etc.), and reject or sanitize anything else.
+
+  > **Note:** Do not rely on generic "escape" functions for SQL input. The commonly referenced `StringEscapeUtils.escapeSql` method from Apache Commons Lang has been removed in modern versions because it does **not** provide adequate protection against SQL injection.
+
+  > **If you cannot use parameterized queries, avoid interpolating untrusted input.** Some database drivers may provide their own escaping/sanitization methods (e.g., PostgreSQL's `PGConnection.escapeString()`), but these are not a substitute for proper validation and whitelisting.
+
+- **Best Practice:** The industry standard is to use parameterized queries (prepared statements), which are not currently supported by this tool. **If possible, avoid using this tool for queries involving untrusted input.**
 
 **Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed.
 

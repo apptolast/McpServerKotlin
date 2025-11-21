@@ -29,6 +29,23 @@ class BashExecutor(
         )
     }
     
+    /**
+     * Helper function to check for dangerous patterns in text
+     * @param text The text to check
+     * @param context Description of what's being checked (for error messages)
+     * @return Result.failure if dangerous pattern found, Result.success otherwise
+     */
+    private fun checkDangerousPatterns(text: String, context: String): Result<Unit> {
+        DANGEROUS_PATTERNS.forEach { pattern ->
+            if (pattern.containsMatchIn(text)) {
+                return Result.failure(
+                    SecurityException("Dangerous pattern detected in $context")
+                )
+            }
+        }
+        return Result.success(Unit)
+    }
+    
     private fun validateCommand(command: String, args: List<String> = emptyList()): Result<String> {
         val baseCommand = command.trim().split(Regex("\\s+")).firstOrNull() ?: ""
         
@@ -38,21 +55,23 @@ class BashExecutor(
             )
         }
         
-        // Build full command line for dangerous pattern checking
+        // Check for dangerous patterns in command and each argument separately
+        // This prevents bypasses via argument splitting or special characters
+        checkDangerousPatterns(command, "command").getOrElse { return Result.failure(it) }
+        
+        args.forEach { arg ->
+            checkDangerousPatterns(arg, "argument").getOrElse { return Result.failure(it) }
+        }
+        
+        // Also check full command line as a final safety net
+        // This catches patterns that span multiple arguments
         val fullCommandLine = if (args.isEmpty()) {
             command
         } else {
             "$command ${args.joinToString(" ")}"
         }
         
-        // Check for dangerous patterns in full command line
-        DANGEROUS_PATTERNS.forEach { pattern ->
-            if (pattern.containsMatchIn(fullCommandLine)) {
-                return Result.failure(
-                    SecurityException("Dangerous pattern detected in command")
-                )
-            }
-        }
+        checkDangerousPatterns(fullCommandLine, "full command line").getOrElse { return Result.failure(it) }
         
         return Result.success(command)
     }
