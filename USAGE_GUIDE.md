@@ -287,33 +287,42 @@ Retrieve specific entities.
 ### PostgreSQL Tools (3)
 
 #### executeQuery
-Execute read-only SQL queries.
+Execute read-only SQL queries with parameterized query support.
 
 ```json
 {
   "name": "executeQuery",
   "arguments": {
-    "sql": "SELECT * FROM users WHERE age > 18",
+    "sql": "SELECT * FROM users WHERE age > $1 AND city = $2",
+    "params": ["18", "Madrid"],
     "maxRows": 100
   }
 }
 ```
 
-**Note**: Parameter placeholders (`?`) are not supported by this tool. Use direct value interpolation in the SQL string.
-
-**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. **Never interpolate untrusted user input directly into SQL strings.**
+**✅ Security Improvement**: This tool now supports parameterized queries (prepared statements) using PostgreSQL-style placeholders (`$1`, `$2`, ...). Provide parameter values in the `params` array, which will be safely bound to the query.
 
 **How to Safely Handle User Input:**
 
-- **Validate input:** If you must interpolate values, use strict validation and whitelisting. Only allow expected values (e.g., numbers, specific column names, etc.), and reject or sanitize anything else.
+- **Use parameterized queries:** Always use placeholders in your SQL and provide values via the `params` array. This ensures user input is safely escaped and prevents SQL injection vulnerabilities.
+
+  ```json
+  {
+    "name": "executeQuery",
+    "arguments": {
+      "sql": "SELECT * FROM products WHERE price < $1 AND category = $2",
+      "params": ["100.00", "electronics"]
+    }
+  }
+  ```
 
   > **Note:** Do not rely on generic "escape" functions for SQL input. The commonly referenced `StringEscapeUtils.escapeSql` method from Apache Commons Lang has been removed in modern versions because it does **not** provide adequate protection against SQL injection.
 
-  > **If you cannot use parameterized queries, avoid interpolating untrusted input.** Some database drivers may provide their own escaping/sanitization methods (e.g., PostgreSQL's `PGConnection.escapeString()`), but these are not a substitute for proper validation and whitelisting.
+  > **Best Practice:** The industry standard is to use parameterized queries (prepared statements), which are now fully supported by this tool. This is the safest way to handle user input in SQL queries.
 
-- **Best Practice:** The industry standard is to use parameterized queries (prepared statements), which are not currently supported by this tool. **If possible, avoid using this tool for queries involving untrusted input.**
+- **Legacy support:** Direct value interpolation is still possible but **strongly discouraged**. If you must interpolate values without parameters, use strict validation and whitelisting.
 
-**Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed.
+**Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed. All write operations (INSERT, UPDATE, DELETE, DROP, etc.) are blocked.
 
 #### getSchema
 Get database schema information.

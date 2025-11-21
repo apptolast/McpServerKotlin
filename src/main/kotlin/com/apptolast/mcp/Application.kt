@@ -2,6 +2,7 @@ package com.apptolast.mcp
 
 import com.apptolast.mcp.server.McpServerInstance
 import com.apptolast.mcp.server.ServerConfig
+import com.apptolast.mcp.server.ToolRegistry
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -196,25 +197,12 @@ fun Application.configureHttpServer(config: ServerConfig) {
         // Tools list endpoint for debugging/monitoring
         get("/tools") {
             try {
-                // Note: MCP SDK doesn't expose a public API to list registered tools dynamically
-                // This endpoint provides static information about available tools
-                // TODO: To prevent drift, consider one of these approaches:
-                //       1. Generate this list from McpServerInstance.kt documentation comment (lines 23-30)
-                //       2. Create a shared constant in ServerConfig that both places reference
-                //       3. Add a unit test that fails if tool counts don't match between files
-                //       Current registration: McpServerInstance.registerAllTools() (line 76)
+                // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
+                // This eliminates drift between documentation, endpoint, and tests
                 call.respond(
-                    mapOf(
-                        "total_tools" to 28,
-                        "modules" to mapOf(
-                            "filesystem" to listOf("readFile", "writeFile", "listDirectory", "createDirectory", "deleteFile"),
-                            "bash" to listOf("execute"),
-                            "github" to listOf("status", "commit", "push", "clone", "log", "branch"),
-                            "memory" to listOf("createEntities", "createRelations", "searchNodes", "openNodes"),
-                            "postgresql" to listOf("executeQuery", "getSchema", "testConnection"),
-                            "mongodb" to listOf("find", "listCollections", "countDocuments", "aggregate", "testConnection"),
-                            "resources" to listOf("listResources", "readResource", "createResource", "deleteResource")
-                        )
+                    mapOf<String, Any>(
+                        "total_tools" to ToolRegistry.TOTAL_TOOLS,
+                        "modules" to ToolRegistry.TOOLS_BY_MODULE
                     )
                 )
             } catch (e: Exception) {
