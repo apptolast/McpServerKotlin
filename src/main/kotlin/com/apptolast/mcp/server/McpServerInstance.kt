@@ -104,10 +104,12 @@ class McpServerInstance(private val config: ServerConfig) {
 
         val resources = resourceModule.listResources()
 
-        // TODO: Register each resource with server.addResource()
-        // This requires accessing the resource content from the ToolResult
+        // Note: Resources are currently accessible through resource tools (listResources, readResource, etc.)
+        // Future enhancement: Register individual resources with server.addResource() to make them
+        // directly accessible as MCP resources (not just through tools).
+        // This would require parsing the ToolResult content and extracting individual resource metadata.
 
-        logger.info { "Successfully registered ${resources.content.size} resources" }
+        logger.info { "Resources available through resource module tools" }
     }
 
     /**
