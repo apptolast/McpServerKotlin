@@ -305,17 +305,11 @@ Execute read-only SQL queries.
 
 **How to Safely Handle User Input:**
 
-- **Validate input:** Only allow expected values (e.g., numbers, whitelisted column names, etc.). Reject or sanitize anything else.
-- **Sanitize input:** Use a well-known library to escape or sanitize user input. For example, in Kotlin/Java, you can use `StringEscapeUtils.escapeSql` from Apache Commons Lang.
-- **Example (Kotlin):**
+- **Validate input:** If you must interpolate values, use strict validation and whitelisting. Only allow expected values (e.g., numbers, specific column names, etc.), and reject or sanitize anything else.
 
-  ```kotlin
-  import org.apache.commons.lang3.StringEscapeUtils
+  > **Note:** Do not rely on generic "escape" functions for SQL input. The commonly referenced `StringEscapeUtils.escapeSql` method from Apache Commons Lang has been removed in modern versions because it does **not** provide adequate protection against SQL injection.
 
-  val unsafeUserInput = "O'Reilly"
-  val safeInput = StringEscapeUtils.escapeSql(unsafeUserInput)
-  val query = "SELECT * FROM users WHERE name = '$safeInput'"
-  ```
+  > **If you cannot use parameterized queries, avoid interpolating untrusted input.** Some database drivers may provide their own escaping/sanitization methods (e.g., PostgreSQL's `PGConnection.escapeString()`), but these are not a substitute for proper validation and whitelisting.
 
 - **Best Practice:** The industry standard is to use parameterized queries (prepared statements), which are not currently supported by this tool. **If possible, avoid using this tool for queries involving untrusted input.**
 
