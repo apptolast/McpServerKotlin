@@ -6,8 +6,8 @@ import kotlin.test.assertTrue
 
 /**
  * Test to ensure tool lists remain synchronized between:
- * - McpServerInstance.kt documentation comment (lines 23-30)
- * - Application.kt /tools endpoint (lines 208-217)
+ * - McpServerInstance.kt documentation comment
+ * - Application.kt /tools endpoint implementation
  *
  * This test prevents drift where new tools are added to one place but not the other.
  */
@@ -29,6 +29,11 @@ class ToolListSynchronizationTest {
     /**
      * Tool list as defined in Application.kt /tools endpoint
      * This should match the documentation in McpServerInstance.kt
+     *
+     * Note: This is intentionally hardcoded (not imported from Application.kt) so that
+     * the test fails when tools are added/removed without updating both places.
+     * The test's purpose is to catch synchronization drift, which requires comparing
+     * against a known, fixed reference.
      */
     private val applicationToolList = mapOf(
         "filesystem" to listOf("readFile", "writeFile", "listDirectory", "createDirectory", "deleteFile"),
