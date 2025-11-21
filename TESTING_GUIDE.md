@@ -311,6 +311,6 @@ See `.github/workflows/docker-build-deploy.yml` for CI configuration.
 
 ---
 
-**Last Updated**: 2025-11-20
+**Last Updated**: 2025-11-21
 **Test Count**: 57 tests (53 active)
 **Pass Rate**: 93% (53/57 tests passing; 4 tests temporarily disabled)
