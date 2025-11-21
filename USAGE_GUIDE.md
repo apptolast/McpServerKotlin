@@ -300,6 +300,9 @@ Execute read-only SQL queries.
 ```
 
 **Note**: Parameter placeholders (`?`) are not supported by this tool. Use direct value interpolation in the SQL string.
+
+**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. Always validate and sanitize user inputs before constructing SQL queries. Never interpolate untrusted user input directly into SQL strings.
+
 **Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed.
 
 #### getSchema
@@ -589,6 +592,8 @@ bash {
 ```
 
 ### 3. Database Operations
+
+**⚠️ Security Note**: When constructing SQL queries with interpolated values, always validate and sanitize inputs to prevent SQL injection.
 
 ```json
 [

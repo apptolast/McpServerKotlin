@@ -262,7 +262,7 @@ See `.github/workflows/docker-build-deploy.yml` for CI configuration.
   - Resources: 100%
   - PostgreSQL: 100%
   - MongoDB: 100%
-  - Memory: 71% (2 tests disabled due to JSONL serialization issue)
+  - Memory: 71% (2 tests disabled due to JSONL serialization issue; coverage percentage corrected from previously reported 86%)
 
 ## Best Practices
 
