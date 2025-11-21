@@ -293,12 +293,15 @@ Execute read-only SQL queries.
 {
   "name": "executeQuery",
   "arguments": {
-    "sql": "SELECT * FROM users WHERE age > ?",
-    "params": [18],
+    "sql": "SELECT * FROM users WHERE age > 18",
     "maxRows": 100
   }
 }
 ```
+
+**Note**: Parameter placeholders (`?`) are not supported by this tool. Use direct value interpolation in the SQL string.
+
+**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. Always validate and sanitize user inputs before constructing SQL queries. Never interpolate untrusted user input directly into SQL strings.
 
 **Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed.
 
@@ -417,7 +420,7 @@ Create a new resource.
   "name": "createResource",
   "arguments": {
     "name": "project-notes.md",
-    "content": "# Project Notes\\n\\n...",
+    "content": "# Project Notes\n\n...",
     "mimeType": "text/markdown"
   }
 }
@@ -501,59 +504,123 @@ bash {
 
 ### 1. Create a New Project
 
-```kotlin
-// 1. Create project directory
-writeFile("/workspace/my-app/README.md", "# My App")
-
-// 2. Initialize Git
-execute("git", ["init"], {})
-commit("Initial commit", ["."])
-
-// 3. Store metadata in knowledge graph
-createEntities([{
-  name: "MyApp",
-  entityType: "project",
-  observations: ["Created today", "Kotlin project"]
-}])
-
-// 4. Create documentation resource
-createResource("my-app-docs.md", "# Documentation\\n...", "text/markdown")
+```json
+[
+  {
+    "name": "writeFile",
+    "arguments": {
+      "path": "/workspace/my-app/README.md",
+      "content": "# My App",
+      "mode": "CREATE"
+    }
+  },
+  {
+    "name": "execute",
+    "arguments": {
+      "command": "git",
+      "args": ["init"],
+      "workingDir": "/workspace/my-app"
+    }
+  },
+  {
+    "name": "commit",
+    "arguments": {
+      "message": "Initial commit",
+      "files": ["."]
+    }
+  },
+  {
+    "name": "createEntities",
+    "arguments": {
+      "entities": [
+        {
+          "name": "MyApp",
+          "entityType": "project",
+          "observations": ["Created today", "Kotlin project"]
+        }
+      ]
+    }
+  },
+  {
+    "name": "createResource",
+    "arguments": {
+      "name": "my-app-docs.md",
+      "content": "# Documentation\n...",
+      "mimeType": "text/markdown"
+    }
+  }
+]
 ```
 
 ### 2. Analyze Existing Code
 
-```kotlin
-// 1. List files
-listDirectory("/workspace/existing-project", true)
-
-// 2. Read source files
-readFile("/workspace/existing-project/src/Main.kt")
-
-// 3. Run analysis commands
-execute("grep", ["-r", "TODO", "/workspace/existing-project/src"])
-
-// 4. Store findings in knowledge graph
-createEntities([{
-  name: "CodeAnalysis",
-  entityType: "analysis",
-  observations: ["Found 5 TODOs", "Needs refactoring in Module X"]
-}])
+```json
+[
+  {
+    "name": "listDirectory",
+    "arguments": {
+      "path": "/workspace/existing-project",
+      "recursive": true
+    }
+  },
+  {
+    "name": "readFile",
+    "arguments": {
+      "path": "/workspace/existing-project/src/Main.kt"
+    }
+  },
+  {
+    "name": "execute",
+    "arguments": {
+      "command": "grep",
+      "args": ["-r", "TODO", "/workspace/existing-project/src"]
+    }
+  },
+  {
+    "name": "createEntities",
+    "arguments": {
+      "entities": [
+        {
+          "name": "CodeAnalysis",
+          "entityType": "analysis",
+          "observations": ["Found 5 TODOs", "Needs refactoring in Module X"]
+        }
+      ]
+    }
+  }
+]
 ```
 
 ### 3. Database Operations
 
-```kotlin
-// 1. Test connection
-testConnection()
+**⚠️ Security Note**: When constructing SQL queries with interpolated values, always validate and sanitize inputs to prevent SQL injection.
 
-// 2. Get schema
-getSchema()
-
-// 3. Query data
-executeQuery("SELECT * FROM users WHERE created_at > ?", ["2025-01-01"], 100)
-
-// 4. Store results in files
-writeFile("/workspace/query-results.json", results)
+```json
+[
+  {
+    "name": "testConnection",
+    "arguments": {}
+  },
+  {
+    "name": "getSchema",
+    "arguments": {}
+  },
+  {
+    "name": "executeQuery",
+    "arguments": {
+      "sql": "SELECT * FROM users WHERE created_at > '2025-01-01'",
+      "maxRows": 100
+    }
+  },
+  {
+    "name": "writeFile",
+    "arguments": {
+      "path": "/workspace/query-results.json",
+      "content": "[results]",
+      "mode": "CREATE"
+    }
+  }
+]
 ```
 
 ## Security Best Practices
@@ -641,7 +708,7 @@ kubectl logs -f deployment/mcp-fullstack-server -n cyberlab
 
 ## Resources
 
-- **GitHub Repository**: [MCP Server Kotlin](https://github.com/yourusername/mcp-fullstack-server)
+- **GitHub Repository**: [MCP Server Kotlin](https://github.com/apptolast/McpServerKotlin)
 - **MCP Protocol**: https://modelcontextprotocol.io
 - **CLAUDE.MD**: Project-specific instructions
 - **TESTING_GUIDE.MD**: Testing instructions

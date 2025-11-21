@@ -75,7 +75,7 @@ class BashExecutorTest {
         )
         val executor = BashExecutor(config)
         // chmod 777 should be blocked by dangerous pattern even though chmod is allowed
-        val result2 = executor.execute("chmod 777", emptyList())
+        val result2 = executor.execute("chmod", listOf("777", "somefile"))
         assertTrue(result2.isError)
         val text2 = result2.content.first().toString()
         assertTrue(
@@ -96,8 +96,14 @@ class BashExecutorTest {
         // This should timeout
         val result = executor.execute("sleep", listOf("5"))
 
-        // The result should indicate failure or timeout
-        assertTrue(result.isError || result.content.first().toString().contains("143"))
+        // The result should indicate failure due to timeout (SIGTERM/143 or timeout message)
+        val output = result.content.firstOrNull()?.toString() ?: ""
+        assertTrue(
+            output.contains("timed out", ignoreCase = true) ||
+            output.contains("timeout", ignoreCase = true) ||
+            output.contains("143"),
+            "Expected timeout error or SIGTERM (143), got: $output"
+        )
     }
 
     @Test
@@ -112,7 +118,7 @@ class BashExecutorTest {
     @Test
     fun `test environment variables`() = runBlocking {
         val envVars = mapOf("TEST_VAR" to "test_value")
-        val result = bashExecutor.execute("echo", listOf("\$TEST_VAR"), envVars)
+        val result = bashExecutor.execute("echo", listOf("${'$'}TEST_VAR"), envVars)
 
         assertFalse(result.isError)
         // Environment variables should be set

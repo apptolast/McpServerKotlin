@@ -29,7 +29,7 @@ class BashExecutor(
         )
     }
     
-    private fun validateCommand(command: String): Result<String> {
+    private fun validateCommand(command: String, args: List<String> = emptyList()): Result<String> {
         val baseCommand = command.trim().split(Regex("\\s+")).firstOrNull() ?: ""
         
         if (!config.allowedCommands.contains(baseCommand)) {
@@ -38,9 +38,16 @@ class BashExecutor(
             )
         }
         
-        // Check for dangerous patterns
+        // Build full command line for dangerous pattern checking
+        val fullCommandLine = if (args.isEmpty()) {
+            command
+        } else {
+            "$command ${args.joinToString(" ")}"
+        }
+        
+        // Check for dangerous patterns in full command line
         DANGEROUS_PATTERNS.forEach { pattern ->
-            if (pattern.containsMatchIn(command)) {
+            if (pattern.containsMatchIn(fullCommandLine)) {
                 return Result.failure(
                     SecurityException("Dangerous pattern detected in command")
                 )
@@ -55,7 +62,7 @@ class BashExecutor(
         args: List<String> = emptyList(),
         env: Map<String, String> = emptyMap()
     ): ToolResult {
-        return validateCommand(command).fold(
+        return validateCommand(command, args).fold(
             onSuccess = { validCommand ->
                 withContext(Dispatchers.IO) {
                     try {
