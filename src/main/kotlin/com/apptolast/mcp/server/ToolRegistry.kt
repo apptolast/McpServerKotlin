@@ -20,6 +20,91 @@ private val logger = KotlinLogging.logger {}
  */
 class ToolRegistry {
 
+    companion object {
+        /**
+         * Centralized static tool definitions - single source of truth for all available tools.
+         *
+         * This prevents drift between:
+         * - McpServerInstance.kt documentation
+         * - Application.kt /tools endpoint
+         * - ToolListSynchronizationTest.kt
+         *
+         * Structure:
+         * - Key: Module name (lowercase)
+         * - Value: List of tool names exposed by that module
+         */
+        val TOOLS_BY_MODULE: Map<String, List<String>> = mapOf(
+            "filesystem" to listOf(
+                "readFile",
+                "writeFile",
+                "listDirectory",
+                "createDirectory",
+                "deleteFile"
+            ),
+            "bash" to listOf(
+                "execute"
+            ),
+            "github" to listOf(
+                "status",
+                "commit",
+                "push",
+                "clone",
+                "log",
+                "branch"
+            ),
+            "memory" to listOf(
+                "createEntities",
+                "createRelations",
+                "searchNodes",
+                "openNodes"
+            ),
+            "postgresql" to listOf(
+                "executeQuery",
+                "getSchema",
+                "testConnection"
+            ),
+            "mongodb" to listOf(
+                "find",
+                "listCollections",
+                "countDocuments",
+                "aggregate",
+                "testConnection"
+            ),
+            "resources" to listOf(
+                "listResources",
+                "readResource",
+                "createResource",
+                "deleteResource"
+            )
+        )
+
+        /**
+         * Total number of tools across all modules.
+         */
+        val TOTAL_TOOLS: Int = TOOLS_BY_MODULE.values.sumOf { it.size }
+
+        /**
+         * Get tool count for a specific module.
+         */
+        fun getModuleToolCount(module: String): Int {
+            return TOOLS_BY_MODULE[module]?.size ?: 0
+        }
+
+        /**
+         * Get all module names.
+         */
+        fun getAllModules(): Set<String> {
+            return TOOLS_BY_MODULE.keys
+        }
+
+        /**
+         * Check if a tool exists in a specific module.
+         */
+        fun hasToolInModule(module: String, toolName: String): Boolean {
+            return TOOLS_BY_MODULE[module]?.contains(toolName) ?: false
+        }
+    }
+
     private val tools = ConcurrentHashMap<String, ToolHandler>()
 
     /**

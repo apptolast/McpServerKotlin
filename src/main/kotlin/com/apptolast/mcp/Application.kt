@@ -2,6 +2,7 @@ package com.apptolast.mcp
 
 import com.apptolast.mcp.server.McpServerInstance
 import com.apptolast.mcp.server.ServerConfig
+import com.apptolast.mcp.server.ToolRegistry
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -196,13 +197,12 @@ fun Application.configureHttpServer(config: ServerConfig) {
         // Tools list endpoint for debugging/monitoring
         get("/tools") {
             try {
-                // TODO: Implement a way to list registered tools
-                // The SDK doesn't expose a public API for this
+                // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
+                // This eliminates drift between documentation, endpoint, and tests
                 call.respond(
                     mapOf(
-                        "message" to "Tools list endpoint not yet implemented",
-                        "registered_tools" to 28,
-                        "modules" to listOf("filesystem", "bash", "github", "memory", "postgresql", "mongodb", "resources")
+                        "total_tools" to ToolRegistry.TOTAL_TOOLS,
+                        "modules" to ToolRegistry.TOOLS_BY_MODULE
                     )
                 )
             } catch (e: Exception) {
