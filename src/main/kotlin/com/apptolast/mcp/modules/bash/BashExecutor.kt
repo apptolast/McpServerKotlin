@@ -29,7 +29,24 @@ class BashExecutor(
         )
     }
     
-    private fun validateCommand(command: String): Result<String> {
+    /**
+     * Helper function to check for dangerous patterns in text
+     * @param text The text to check
+     * @param context Description of what's being checked (for error messages)
+     * @return Result.failure if dangerous pattern found, Result.success otherwise
+     */
+    private fun checkDangerousPatterns(text: String, context: String): Result<Unit> {
+        DANGEROUS_PATTERNS.forEach { pattern ->
+            if (pattern.containsMatchIn(text)) {
+                return Result.failure(
+                    SecurityException("Dangerous pattern detected in $context")
+                )
+            }
+        }
+        return Result.success(Unit)
+    }
+    
+    private fun validateCommand(command: String, args: List<String> = emptyList()): Result<String> {
         val baseCommand = command.trim().split(Regex("\\s+")).firstOrNull() ?: ""
         
         if (!config.allowedCommands.contains(baseCommand)) {
@@ -38,14 +55,23 @@ class BashExecutor(
             )
         }
         
-        // Check for dangerous patterns
-        DANGEROUS_PATTERNS.forEach { pattern ->
-            if (pattern.containsMatchIn(command)) {
-                return Result.failure(
-                    SecurityException("Dangerous pattern detected in command")
-                )
-            }
+        // Check for dangerous patterns in command and each argument separately
+        // This prevents bypasses via argument splitting or special characters
+        checkDangerousPatterns(command, "command").getOrElse { return Result.failure(it) }
+        
+        args.forEach { arg ->
+            checkDangerousPatterns(arg, "argument").getOrElse { return Result.failure(it) }
         }
+        
+        // Also check full command line as a final safety net
+        // This catches patterns that span multiple arguments
+        val fullCommandLine = if (args.isEmpty()) {
+            command
+        } else {
+            "$command ${args.joinToString(" ")}"
+        }
+        
+        checkDangerousPatterns(fullCommandLine, "full command line").getOrElse { return Result.failure(it) }
         
         return Result.success(command)
     }
@@ -55,7 +81,7 @@ class BashExecutor(
         args: List<String> = emptyList(),
         env: Map<String, String> = emptyMap()
     ): ToolResult {
-        return validateCommand(command).fold(
+        return validateCommand(command, args).fold(
             onSuccess = { validCommand ->
                 withContext(Dispatchers.IO) {
                     try {

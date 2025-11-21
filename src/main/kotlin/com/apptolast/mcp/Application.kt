@@ -196,13 +196,25 @@ fun Application.configureHttpServer(config: ServerConfig) {
         // Tools list endpoint for debugging/monitoring
         get("/tools") {
             try {
-                // TODO: Implement a way to list registered tools
-                // The SDK doesn't expose a public API for this
+                // Note: MCP SDK doesn't expose a public API to list registered tools dynamically
+                // This endpoint provides static information about available tools
+                // TODO: To prevent drift, consider one of these approaches:
+                //       1. Generate this list from McpServerInstance.kt documentation comment (lines 23-30)
+                //       2. Create a shared constant in ServerConfig that both places reference
+                //       3. Add a unit test that fails if tool counts don't match between files
+                //       Current registration: McpServerInstance.registerAllTools() (line 76)
                 call.respond(
                     mapOf(
-                        "message" to "Tools list endpoint not yet implemented",
-                        "registered_tools" to 28,
-                        "modules" to listOf("filesystem", "bash", "github", "memory", "postgresql", "mongodb", "resources")
+                        "total_tools" to 28,
+                        "modules" to mapOf(
+                            "filesystem" to listOf("readFile", "writeFile", "listDirectory", "createDirectory", "deleteFile"),
+                            "bash" to listOf("execute"),
+                            "github" to listOf("status", "commit", "push", "clone", "log", "branch"),
+                            "memory" to listOf("createEntities", "createRelations", "searchNodes", "openNodes"),
+                            "postgresql" to listOf("executeQuery", "getSchema", "testConnection"),
+                            "mongodb" to listOf("find", "listCollections", "countDocuments", "aggregate", "testConnection"),
+                            "resources" to listOf("listResources", "readResource", "createResource", "deleteResource")
+                        )
                     )
                 )
             } catch (e: Exception) {
