@@ -38,18 +38,38 @@ class BashExecutor(
             )
         }
         
-        // Build full command line for dangerous pattern checking
+        // Check for dangerous patterns in command and each argument separately
+        // This prevents bypasses via argument splitting or special characters
+        DANGEROUS_PATTERNS.forEach { pattern ->
+            // Check base command
+            if (pattern.containsMatchIn(command)) {
+                return Result.failure(
+                    SecurityException("Dangerous pattern detected in command")
+                )
+            }
+            
+            // Check each argument individually
+            args.forEach { arg ->
+                if (pattern.containsMatchIn(arg)) {
+                    return Result.failure(
+                        SecurityException("Dangerous pattern detected in argument")
+                    )
+                }
+            }
+        }
+        
+        // Also check full command line as a final safety net
+        // This catches patterns that span multiple arguments
         val fullCommandLine = if (args.isEmpty()) {
             command
         } else {
             "$command ${args.joinToString(" ")}"
         }
         
-        // Check for dangerous patterns in full command line
         DANGEROUS_PATTERNS.forEach { pattern ->
             if (pattern.containsMatchIn(fullCommandLine)) {
                 return Result.failure(
-                    SecurityException("Dangerous pattern detected in command")
+                    SecurityException("Dangerous pattern detected in full command line")
                 )
             }
         }

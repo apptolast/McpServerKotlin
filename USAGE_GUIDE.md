@@ -301,7 +301,23 @@ Execute read-only SQL queries.
 
 **Note**: Parameter placeholders (`?`) are not supported by this tool. Use direct value interpolation in the SQL string.
 
-**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. Always validate and sanitize user inputs before constructing SQL queries. Never interpolate untrusted user input directly into SQL strings.
+**⚠️ Security Warning**: Direct value interpolation can lead to SQL injection vulnerabilities. **Never interpolate untrusted user input directly into SQL strings.**
+
+**How to Safely Handle User Input:**
+
+- **Validate input:** Only allow expected values (e.g., numbers, whitelisted column names, etc.). Reject or sanitize anything else.
+- **Sanitize input:** Use a well-known library to escape or sanitize user input. For example, in Kotlin/Java, you can use `StringEscapeUtils.escapeSql` from Apache Commons Lang.
+- **Example (Kotlin):**
+
+  ```kotlin
+  import org.apache.commons.lang3.StringEscapeUtils
+
+  val unsafeUserInput = "O'Reilly"
+  val safeInput = StringEscapeUtils.escapeSql(unsafeUserInput)
+  val query = "SELECT * FROM users WHERE name = '$safeInput'"
+  ```
+
+- **Best Practice:** The industry standard is to use parameterized queries (prepared statements), which are not currently supported by this tool. **If possible, avoid using this tool for queries involving untrusted input.**
 
 **Security**: Only `SELECT`, `SHOW`, `DESCRIBE`, `EXPLAIN` queries allowed.
 
