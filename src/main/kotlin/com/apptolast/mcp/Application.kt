@@ -200,7 +200,7 @@ fun Application.configureHttpServer(config: ServerConfig) {
                 // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
                 // This eliminates drift between documentation, endpoint, and tests
                 call.respond(
-                    mapOf<String, Any>(
+                    mapOf(
                         "total_tools" to ToolRegistry.TOTAL_TOOLS,
                         "modules" to ToolRegistry.TOOLS_BY_MODULE
                     )
