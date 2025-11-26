@@ -201,16 +201,23 @@ fun Application.configureHttpServer(config: ServerConfig) {
         get("/tools") {
             try {
                 // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
-                // This eliminates drift between documentation, endpoint, and tests
-                call.respond(
-                    mapOf(
-                        "total_tools" to ToolRegistry.TOTAL_TOOLS,
-                        "modules" to ToolRegistry.TOOLS_BY_MODULE
-                    )
-                )
+                // Build JSON explicitly to avoid kotlinx.serialization mixed-type issues
+                val response = buildJsonObject {
+                    put("total_tools", ToolRegistry.TOTAL_TOOLS)
+                    putJsonObject("modules") {
+                        ToolRegistry.TOOLS_BY_MODULE.forEach { (module, tools) ->
+                            putJsonArray(module) {
+                                tools.forEach { add(it) }
+                            }
+                        }
+                    }
+                }
+                call.respond(response)
             } catch (e: Exception) {
                 logger.error(e) { "Error listing tools" }
-                call.respond(HttpStatusCode.InternalServerError, mapOf("error" to e.message))
+                call.respond(HttpStatusCode.InternalServerError, buildJsonObject {
+                    put("error", e.message ?: "Unknown error")
+                })
             }
         }
     }
