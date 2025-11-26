@@ -13,7 +13,9 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sse.*
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
+import io.modelcontextprotocol.kotlin.sdk.server.mcp
 import io.ktor.utils.io.streams.asInput
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.awaitCancellation
@@ -98,8 +100,13 @@ private fun runHttpMode(config: ServerConfig) {
 
 /**
  * Configure HTTP server with MCP endpoints
+ *
+ * Supports both REST endpoints and MCP protocol via SSE transport.
  */
 fun Application.configureHttpServer(config: ServerConfig) {
+    // Install SSE support for MCP protocol
+    install(SSE)
+
     // Install JSON content negotiation
     install(ContentNegotiation) {
         json(Json {
@@ -128,11 +135,14 @@ fun Application.configureHttpServer(config: ServerConfig) {
             call.respondText(
                 "MCP Full-Stack Server v1.0.0\n\n" +
                         "Endpoints:\n" +
-                        "  POST /mcp - MCP JSON-RPC endpoint\n" +
+                        "  /mcp - MCP protocol via SSE (Server-Sent Events)\n" +
                         "  GET /health - Health check\n" +
                         "  GET /ready - Readiness probe\n" +
-                        "  GET /info - Server capabilities\n\n" +
-                        "For stdio mode: Run with --stdio flag\n"
+                        "  GET /info - Server capabilities\n" +
+                        "  GET /tools - List available tools\n\n" +
+                        "Modes:\n" +
+                        "  HTTP (default) - SSE transport for remote clients\n" +
+                        "  STDIO (--stdio) - For Claude Desktop/Code\n"
             )
         }
 
@@ -178,20 +188,13 @@ fun Application.configureHttpServer(config: ServerConfig) {
             call.respond(info)
         }
 
-        // NOTE: MCP SDK 0.7.7 is designed for stdio transport only
-        // HTTP endpoints for MCP protocol are not supported by the SDK
-        // Use the stdio mode to connect MCP clients (Claude Desktop, etc.)
-
-        // Placeholder endpoint for documentation purposes
-        post("/mcp") {
-            call.respond(
-                HttpStatusCode.NotImplemented,
-                mapOf(
-                    "error" to "MCP over HTTP not supported",
-                    "message" to "Please use stdio transport to connect MCP clients",
-                    "documentation" to "https://modelcontextprotocol.io"
-                )
-            )
+        // MCP protocol endpoint via SSE transport
+        // This enables remote MCP clients to connect over HTTP using Server-Sent Events
+        // Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+        route("/mcp") {
+            mcp {
+                mcpServer.server
+            }
         }
 
         // Tools list endpoint for debugging/monitoring
@@ -213,6 +216,6 @@ fun Application.configureHttpServer(config: ServerConfig) {
     }
 
     logger.info { "HTTP server configured on ${config.host}:${config.port}" }
-    logger.info { "MCP endpoint: http://${config.host}:${config.port}/mcp" }
+    logger.info { "MCP SSE endpoint: http://${config.host}:${config.port}/mcp" }
     logger.info { "Health check: http://${config.host}:${config.port}/health" }
 }
