@@ -81,3 +81,6 @@ temp/
 
 # GitHub Actions deployment signals
 .deployment/
+
+# Kubernetes secrets (contain sensitive data - use secrets.yaml.template as reference)
+k8s/secrets.yaml
