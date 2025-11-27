@@ -1,5 +1,8 @@
 package com.apptolast.mcp
 
+import com.apptolast.mcp.security.JwtConfig
+import com.apptolast.mcp.security.configureJwtAuth
+import com.apptolast.mcp.security.mcpPrincipal
 import com.apptolast.mcp.server.McpServerInstance
 import com.apptolast.mcp.server.ServerConfig
 import com.apptolast.mcp.server.ToolRegistry
@@ -7,6 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -116,6 +120,10 @@ fun Application.configureHttpServer(config: ServerConfig) {
         })
     }
 
+    // Configure JWT Authentication (RS256)
+    // This will only be active if JWT_PUBLIC_KEY is configured
+    configureJwtAuth()
+
     // Create and initialize MCP server instance
     val mcpServer = McpServerInstance(config)
 
@@ -130,14 +138,22 @@ fun Application.configureHttpServer(config: ServerConfig) {
     }
 
     routing {
-        // Root endpoint
+        // =====================================================
+        // PUBLIC ENDPOINTS (No authentication required)
+        // These are accessible without JWT for K8s probes and basic info
+        // =====================================================
+
+        // Root endpoint - Basic server info
         get("/") {
+            val authStatus = if (JwtConfig.isEnabled()) "ENABLED (JWT RS256)" else "DISABLED"
             call.respondText(
                 "MCP Full-Stack Server v1.0.0\n\n" +
-                        "Endpoints:\n" +
+                        "Authentication: $authStatus\n\n" +
+                        "Public Endpoints:\n" +
+                        "  GET /health - Health check (K8s liveness probe)\n" +
+                        "  GET /ready - Readiness probe (K8s readiness probe)\n\n" +
+                        "Protected Endpoints (require JWT):\n" +
                         "  /mcp - MCP protocol via SSE (Server-Sent Events)\n" +
-                        "  GET /health - Health check\n" +
-                        "  GET /ready - Readiness probe\n" +
                         "  GET /info - Server capabilities\n" +
                         "  GET /tools - List available tools\n\n" +
                         "Modes:\n" +
@@ -146,78 +162,101 @@ fun Application.configureHttpServer(config: ServerConfig) {
             )
         }
 
-        // Health check endpoint
+        // Health check endpoint - K8s liveness probe
         get("/health") {
             call.respondText("OK")
         }
 
-        // Readiness check endpoint
+        // Readiness check endpoint - K8s readiness probe
         get("/ready") {
             call.respondText("READY")
         }
 
-        // Server information endpoint
-        get("/info") {
-            val info = buildJsonObject {
-                put("name", "mcp-fullstack-server")
-                put("version", "1.0.0")
-                put("protocol", "MCP (Model Context Protocol)")
-                putJsonObject("capabilities") {
-                    putJsonObject("tools") {
-                        put("listChanged", true)
-                    }
-                    putJsonObject("resources") {
-                        put("subscribe", true)
-                        put("listChanged", true)
-                    }
-                    putJsonObject("prompts") {
-                        put("listChanged", false)
-                    }
-                }
-                putJsonObject("modules") {
-                    put("filesystem", 5)  // 5 tools
-                    put("bash", 1)         // 1 tool
-                    put("github", 6)       // 6 tools
-                    put("memory", 4)       // 4 tools
-                    put("database", 8)     // 8 tools (3 PostgreSQL + 5 MongoDB)
-                    put("resources", 4)    // 4 tools
-                }
-                put("totalTools", 28)
-            }
+        // =====================================================
+        // PROTECTED ENDPOINTS (JWT Authentication required)
+        // When JWT is disabled (no public key), these are accessible without auth
+        // =====================================================
+        authenticate("mcp-auth", optional = !JwtConfig.isEnabled()) {
 
-            call.respond(info)
-        }
-
-        // MCP protocol endpoint via SSE transport
-        // This enables remote MCP clients to connect over HTTP using Server-Sent Events
-        // Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
-        route("/mcp") {
-            mcp {
-                mcpServer.server
-            }
-        }
-
-        // Tools list endpoint for debugging/monitoring
-        get("/tools") {
-            try {
-                // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
-                // Build JSON explicitly to avoid kotlinx.serialization mixed-type issues
-                val response = buildJsonObject {
-                    put("total_tools", ToolRegistry.TOTAL_TOOLS)
-                    putJsonObject("modules") {
-                        ToolRegistry.TOOLS_BY_MODULE.forEach { (module, tools) ->
-                            putJsonArray(module) {
-                                tools.forEach { add(it) }
+            // Server information endpoint
+            get("/info") {
+                val principal = call.mcpPrincipal()
+                val info = buildJsonObject {
+                    put("name", "mcp-fullstack-server")
+                    put("version", "1.0.0")
+                    put("protocol", "MCP (Model Context Protocol)")
+                    put("authentication", JwtConfig.isEnabled())
+                    if (principal != null) {
+                        putJsonObject("user") {
+                            put("subject", principal.subject)
+                            putJsonArray("scopes") {
+                                principal.scopes.forEach { add(it) }
                             }
                         }
                     }
+                    putJsonObject("capabilities") {
+                        putJsonObject("tools") {
+                            put("listChanged", true)
+                        }
+                        putJsonObject("resources") {
+                            put("subscribe", true)
+                            put("listChanged", true)
+                        }
+                        putJsonObject("prompts") {
+                            put("listChanged", false)
+                        }
+                    }
+                    putJsonObject("modules") {
+                        put("filesystem", 5)  // 5 tools
+                        put("bash", 1)         // 1 tool
+                        put("github", 6)       // 6 tools
+                        put("memory", 4)       // 4 tools
+                        put("database", 8)     // 8 tools (3 PostgreSQL + 5 MongoDB)
+                        put("resources", 4)    // 4 tools
+                    }
+                    put("totalTools", 28)
                 }
-                call.respond(response)
-            } catch (e: Exception) {
-                logger.error(e) { "Error listing tools" }
-                call.respond(HttpStatusCode.InternalServerError, buildJsonObject {
-                    put("error", e.message ?: "Unknown error")
-                })
+
+                call.respond(info)
+            }
+
+            // MCP protocol endpoint via SSE transport
+            // This enables remote MCP clients to connect over HTTP using Server-Sent Events
+            // Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+            route("/mcp") {
+                mcp {
+                    mcpServer.server
+                }
+            }
+
+            // Tools list endpoint for debugging/monitoring
+            get("/tools") {
+                try {
+                    val principal = call.mcpPrincipal()
+                    // Uses ToolRegistry.TOOLS_BY_MODULE as the single source of truth
+                    // Build JSON explicitly to avoid kotlinx.serialization mixed-type issues
+                    val response = buildJsonObject {
+                        put("total_tools", ToolRegistry.TOTAL_TOOLS)
+                        if (principal != null) {
+                            putJsonArray("user_scopes") {
+                                principal.scopes.forEach { add(it) }
+                            }
+                        }
+                        putJsonObject("modules") {
+                            ToolRegistry.TOOLS_BY_MODULE.forEach { (module, tools) ->
+                                putJsonArray(module) {
+                                    tools.forEach { add(it) }
+                                }
+                            }
+                        }
+                    }
+                    call.respond(response)
+                } catch (e: Exception) {
+                    logger.error(e) { "Error listing tools" }
+                    call.respond(HttpStatusCode.InternalServerError, buildJsonObject {
+                        put("error", e.message ?: "Unknown error")
+                    })
+                }
             }
         }
     }

@@ -22,6 +22,13 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.1")
     implementation("io.ktor:ktor-server-sse:3.0.1")
 
+    // Ktor Authentication (JWT RS256)
+    implementation("io.ktor:ktor-server-auth:3.0.1")
+    implementation("io.ktor:ktor-server-auth-jwt:3.0.1")
+
+    // JWT library for token generation/validation
+    implementation("com.auth0:java-jwt:4.4.0")
+
     // Ktor Client (required by MCP SDK)
     implementation("io.ktor:ktor-client-core:3.0.1")
     implementation("io.ktor:ktor-client-cio:3.0.1")
