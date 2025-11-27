@@ -84,3 +84,5 @@ temp/
 
 # Kubernetes secrets (contain sensitive data - use secrets.yaml.template as reference)
 k8s/secrets.yaml
+*.env
+
