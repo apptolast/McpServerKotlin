@@ -26,6 +26,7 @@ data class McpPrincipal(
  * 1. Validates JWT tokens using RS256 (public key verification)
  * 2. Extracts claims and creates McpPrincipal
  * 3. Handles authentication failures gracefully
+ * 4. When JWT is not configured, allows all requests (authentication disabled)
  *
  * Reference: https://ktor.io/docs/server-jwt.html
  */
@@ -33,24 +34,30 @@ fun Application.configureJwtAuth() {
     // Log JWT configuration at startup
     JwtConfig.logConfiguration()
 
-    // Skip authentication setup if not enabled
-    if (!JwtConfig.isEnabled()) {
+    val jwtEnabled = JwtConfig.isEnabled()
+    val verifier = JwtConfig.verifier
+
+    if (!jwtEnabled) {
         logger.warn { "JWT Authentication is DISABLED - all endpoints are PUBLIC" }
-        return
     }
 
-    val verifier = JwtConfig.verifier ?: run {
-        logger.error { "JWT verifier not available - authentication disabled" }
-        return
-    }
-
+    // Always install Authentication plugin (required for authenticate() blocks)
     install(Authentication) {
         jwt("mcp-auth") {
             realm = JwtConfig.realm
 
-            verifier(verifier)
+            // Only set verifier if JWT is enabled and verifier is available
+            if (jwtEnabled && verifier != null) {
+                verifier(verifier)
+            }
 
             validate { credential ->
+                // If JWT is not enabled, allow all requests without validation
+                if (!jwtEnabled) {
+                    logger.debug { "JWT disabled - skipping token validation" }
+                    return@validate null  // Return null but optional=true will allow request
+                }
+
                 try {
                     val payload = credential.payload
 
@@ -87,19 +94,30 @@ fun Application.configureJwtAuth() {
             }
 
             challenge { _, _ ->
-                call.respond(
-                    HttpStatusCode.Unauthorized,
-                    mapOf(
-                        "error" to "Unauthorized",
-                        "message" to "Invalid or missing authentication token",
-                        "realm" to JwtConfig.realm
+                // Only respond with 401 if JWT is enabled
+                if (jwtEnabled) {
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        mapOf(
+                            "error" to "Unauthorized",
+                            "message" to "Invalid or missing authentication token",
+                            "realm" to JwtConfig.realm
+                        )
                     )
-                )
+                }
+                // If JWT is disabled, do nothing (allow request to proceed)
             }
+
+            // Skip authentication when disabled
+            skipWhen { !jwtEnabled }
         }
     }
 
-    logger.info { "JWT Authentication configured successfully" }
+    if (jwtEnabled) {
+        logger.info { "JWT Authentication configured successfully" }
+    } else {
+        logger.info { "Authentication plugin installed (JWT disabled - public access)" }
+    }
 }
 
 /**
